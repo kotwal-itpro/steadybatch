@@ -22,10 +22,12 @@ def get_provider(name: str, model: str | None = None) -> BatchProvider:
         if not model:
             raise ValueError("vllm needs a model name")
         return VLLMOffline(model)
-    if name in ("gemini", "bedrock"):
+    if name == "gemini":
+        from .gemini_batch import GeminiBatch
+        return GeminiBatch()
+    if name == "bedrock":
         raise NotImplementedError(
-            f"the {name} adapter is next on the list; see docs/ROADMAP.md. "
-            "Contributions welcome."
+            "the Bedrock adapter is next on the list; see docs/ROADMAP.md. Contributions welcome."
         )
     raise ValueError(f"unknown provider: {name}")
 

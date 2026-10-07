@@ -1,9 +1,8 @@
 # Roadmap
 
 ## Next
-- **Gemini batch mode adapter.** Same interface as the others: submit, status, results.
 - **AWS Bedrock batch inference adapter.** Input and output go through S3, so this one also needs a small S3 helper.
-- **Live checks.** Run the OpenAI and Anthropic adapters against the real services at 1,000 records and note anything the docs don't mention.
+- **Live checks.** Run the OpenAI, Gemini and Anthropic adapters against the real services at 1,000 records and note anything the docs don't mention.
 
 ## Then
 - Benchmark runs at 1,000, 100,000 and 1 million records, three times each on different days.

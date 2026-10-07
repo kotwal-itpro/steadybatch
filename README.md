@@ -20,12 +20,12 @@ If you're turning a million documents into structured data, each of those turns 
 - **Gives results back in your order.** Whatever order the provider returns things in, you get them back in the order you sent them.
 - **Stays under provider limits.** Work is split so each batch stays under the provider's count and size caps.
 
-It works with the OpenAI Batch API, the Anthropic Message Batches API, and self-hosted vLLM. Gemini and Bedrock are next (see [docs/ROADMAP.md](docs/ROADMAP.md)).
+It works with the OpenAI Batch API, Gemini API batch mode, the Anthropic Message Batches API, and self-hosted vLLM. AWS Bedrock is next (see [docs/ROADMAP.md](docs/ROADMAP.md)).
 
 ## Quick start
 
 ```bash
-pip install "steadybatch[openai]"   # or [anthropic], [vllm]
+pip install "steadybatch[openai]"   # or [gemini], [anthropic], [vllm]
 ```
 
 ```python
@@ -99,7 +99,7 @@ The tests use a fake provider that drops lines, returns errors, sends malformed 
 
 ## Status
 
-Early, and moving. The core is tested; the provider adapters for OpenAI and Anthropic follow their documented batch APIs and have unit tests against stand-in clients, and will be checked against the live services as the benchmark runs. Issues and pull requests are welcome.
+Early, and moving. The core is tested; the OpenAI, Gemini and Anthropic adapters follow each provider's documented batch API and have unit tests against stand-in clients. They will be checked against the live services as the benchmark runs. Issues and pull requests are welcome.
 
 ## Citing
 

@@ -88,3 +88,79 @@ def test_anthropic_results_cover_every_result_type():
     out = list(AnthropicBatch(client=client).results("x"))
     assert [(r.custom_id, r.ok) for r in out] == [("a", True), ("b", False), ("c", False)]
     assert out[0].input_tokens == 5 and out[2].error == "expired"
+
+
+# --- Gemini -------------------------------------------------------------
+
+from steadybatch.providers.gemini_batch import GeminiBatch
+
+
+def test_gemini_line_uses_key_and_native_json_schema():
+    line = GeminiBatch(client=object()).to_line(prepared())
+    assert line["key"] == "sb-1"
+    req = line["request"]
+    assert req["contents"] == [{"role": "user", "parts": [{"text": "hi"}]}]
+    assert req["systemInstruction"] == {"parts": [{"text": "be brief"}]}
+    assert req["generationConfig"]["responseMimeType"] == "application/json"
+    assert req["generationConfig"]["responseJsonSchema"] == SCHEMA
+
+
+def test_gemini_can_fall_back_to_schema_in_the_prompt():
+    line = GeminiBatch(client=object(), native_schema=False).to_line(prepared())
+    assert "responseJsonSchema" not in line["request"]["generationConfig"]
+    assert "JSON Schema" in line["request"]["systemInstruction"]["parts"][0]["text"]
+
+
+def test_gemini_parses_success_error_block_and_truncation():
+    ok = GeminiBatch._parse({"key": "a", "response": {
+        "candidates": [{"content": {"parts": [{"text": '{"x":'}, {"text": '"1"}'}]}, "finishReason": "STOP"}],
+        "usageMetadata": {"promptTokenCount": 7, "candidatesTokenCount": 3}}})
+    assert ok.ok and ok.text == '{"x":"1"}' and ok.input_tokens == 7 and ok.output_tokens == 3
+    err = GeminiBatch._parse({"key": "b", "error": {"code": 429, "message": "quota"}})
+    assert not err.ok and "quota" in err.error
+    blocked = GeminiBatch._parse({"key": "c", "response": {"promptFeedback": {"blockReason": "SAFETY"}}})
+    assert not blocked.ok and "SAFETY" in blocked.error
+    cut = GeminiBatch._parse({"key": "d", "response": {
+        "candidates": [{"content": {"parts": [{"text": '{"x":'}]}, "finishReason": "MAX_TOKENS"}]}})
+    assert cut.ok and "truncated" in cut.error
+
+
+def test_gemini_submit_status_results_round_trip():
+    seen = {}
+    out_line = {"key": "sb-1", "response": {"candidates": [
+        {"content": {"parts": [{"text": '{"x":"1"}'}]}, "finishReason": "STOP"}]}}
+
+    class Files:
+        def upload(self, file, config):
+            seen["upload"] = file.read().decode()
+            seen["mime"] = config["mime_type"]
+            return NS(name="files/in")
+
+        def download(self, file):
+            assert file == "files/out"
+            return (json.dumps(out_line) + "\n").encode()
+
+    class Batches:
+        def create(self, model, src, config):
+            seen["model"], seen["src"] = model, src
+            return NS(name="batches/1")
+
+        def get(self, name):
+            return NS(state=NS(name="JOB_STATE_SUCCEEDED"), dest=NS(file_name="files/out"),
+                      completion_stats=NS(successful_count=1, failed_count=0))
+
+    p = GeminiBatch(client=NS(files=Files(), batches=Batches()))
+    assert p.submit([prepared()]) == "batches/1"
+    assert json.loads(seen["upload"])["key"] == "sb-1" and seen["mime"] == "jsonl"
+    assert seen["model"] == "m" and seen["src"] == "files/in"
+    status = p.status("batches/1")
+    assert status.state is BatchState.DONE and status.succeeded == 1
+    assert [r.custom_id for r in p.results("batches/1")] == ["sb-1"]
+
+
+def test_gemini_partial_success_counts_as_done_so_missing_lines_get_retried():
+    job = NS(state=NS(name="JOB_STATE_PARTIALLY_SUCCEEDED"), dest=None,
+             completion_stats=NS(successful_count=8, failed_count=2))
+    p = GeminiBatch(client=NS(batches=NS(get=lambda name: job)))
+    assert p.status("b").state is BatchState.DONE
+    assert list(p.results("b")) == []
