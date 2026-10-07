@@ -70,24 +70,36 @@ def test_openai_submit_status_results_round_trip():
     assert [r.custom_id for r in p.results("batch-1")] == ["sb-1"]
 
 
-def test_anthropic_line_puts_schema_in_system_prompt():
+def test_anthropic_line_uses_structured_output_format():
     line = AnthropicBatch(client=object()).to_line(prepared())
     assert line["custom_id"] == "sb-1"
-    assert "JSON Schema" in line["params"]["system"]
-    assert line["params"]["system"].startswith("be brief")
+    params = line["params"]
+    assert params["output_config"] == {"format": {"type": "json_schema", "schema": SCHEMA}}
+    assert params["system"] == "be brief" and "temperature" not in params
+
+
+def test_anthropic_can_fall_back_to_schema_in_system_prompt():
+    params = AnthropicBatch(client=object(), native_schema=False).to_line(prepared())["params"]
+    assert "output_config" not in params
+    assert params["system"].startswith("be brief") and "JSON Schema" in params["system"]
 
 
 def test_anthropic_results_cover_every_result_type():
-    msg = NS(content=[NS(text='{"x":"1"}')], usage=NS(input_tokens=5, output_tokens=2), stop_reason="end_turn")
+    usage = NS(input_tokens=5, output_tokens=2)
+    msg = NS(content=[NS(type="thinking", thinking=""), NS(type="text", text='{"x":"1"}')],
+             usage=usage, stop_reason="end_turn")
+    refused = NS(content=[], usage=usage, stop_reason="refusal")
     entries = [
         NS(custom_id="a", result=NS(type="succeeded", message=msg)),
         NS(custom_id="b", result=NS(type="errored", error="overloaded")),
         NS(custom_id="c", result=NS(type="expired")),
+        NS(custom_id="d", result=NS(type="succeeded", message=refused)),
     ]
     client = NS(messages=NS(batches=NS(results=lambda bid: iter(entries))))
     out = list(AnthropicBatch(client=client).results("x"))
-    assert [(r.custom_id, r.ok) for r in out] == [("a", True), ("b", False), ("c", False)]
-    assert out[0].input_tokens == 5 and out[2].error == "expired"
+    assert [(r.custom_id, r.ok) for r in out] == [("a", True), ("b", False), ("c", False), ("d", False)]
+    assert out[0].text == '{"x":"1"}' and out[0].input_tokens == 5
+    assert out[2].error == "expired" and out[3].error == "refusal"
 
 
 # --- Gemini -------------------------------------------------------------
@@ -194,3 +206,33 @@ def test_rejected_gemini_job_deletes_its_uploaded_file():
     with pytest.raises(RuntimeError):
         p.submit([prepared()])
     assert deleted == ["files/in"]
+
+
+# --- vLLM ----------------------------------------------------------------
+
+from steadybatch.providers.vllm_offline import VLLMOffline, build_messages
+
+
+def test_vllm_messages_carry_system_prompt_and_schema():
+    msgs = build_messages(prepared())
+    assert msgs[0]["role"] == "system" and msgs[0]["content"].startswith("be brief")
+    assert "JSON Schema" in msgs[0]["content"] and msgs[1] == {"role": "user", "content": "hi"}
+
+
+def test_vllm_submit_maps_outputs_in_order_and_flags_truncation():
+    class FakeLLM:
+        def chat(self, conversations, params, use_tqdm=False):
+            self.seen = conversations
+            return [NS(prompt_token_ids=[1, 2, 3], outputs=[NS(text='{"x":"1"}', token_ids=[9, 9], finish_reason="stop")]),
+                    NS(prompt_token_ids=[1], outputs=[NS(text='{"x":', token_ids=[9], finish_reason="length")])]
+
+    class NoParams(VLLMOffline):
+        def sampling_params(self, req):   # vllm isn't installed on the test machine
+            return None
+
+    p = NoParams("m", llm=FakeLLM())
+    bid = p.submit([prepared("a"), prepared("b")])
+    out = list(p.results(bid))
+    assert [(r.custom_id, r.input_tokens, r.output_tokens) for r in out] == [("a", 3, 2), ("b", 1, 1)]
+    assert out[0].error is None and "truncated" in out[1].error
+    assert p.status(bid).state is BatchState.DONE

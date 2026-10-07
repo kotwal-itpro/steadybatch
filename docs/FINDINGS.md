@@ -57,3 +57,21 @@ Switching providers on the same prompt changes which records are wrong, not only
 
 **Measurement note.** Batch turnaround is measured at the polling interval (60 s for these
 runs), so a reported 182 s means "finished between the 3rd and 4th poll".
+
+## 5. The Anthropic SDK no longer takes `temperature` (Anthropic, 2026-10-07)
+
+**What happened.** Our Anthropic adapter sent `temperature`, like the other adapters. With
+anthropic SDK 1.12, `messages.create()` raised `TypeError: unexpected keyword argument
+'temperature'` before any request was sent. The current Claude models reject non-default
+sampling settings on the API side too.
+
+**Why it matters.** The reproducibility runs compare repeated runs of the same job. On
+gpt-4.1-mini and gemini-3.5-flash-lite we fix `temperature` at 0. For Claude, as for the
+OpenAI reasoning models (finding 2), that option no longer exists, so run-to-run agreement
+has to be measured as the model ships rather than pinned down. We note this next to every
+Claude run.
+
+**What we changed.** The Anthropic adapter no longer sends `temperature`, and it now
+constrains replies with structured outputs (`output_config.format`), matching the schema
+modes we use on OpenAI and Gemini. A refusal is now counted as a failed line rather than
+an empty answer. The package requires `anthropic>=1.0`.

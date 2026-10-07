@@ -9,3 +9,4 @@ runs/
 .pytest_cache/
 examples/support_tickets.jsonl
 *.log
+examples/support_tickets_*.jsonl

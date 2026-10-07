@@ -20,7 +20,7 @@ dependencies = ["jsonschema>=4.0"]
 
 [project.optional-dependencies]
 openai = ["openai>=1.40"]
-anthropic = ["anthropic>=0.40"]
+anthropic = ["anthropic>=1.0"]
 gemini = ["google-genai>=1.20"]
 vllm = ["vllm>=0.6"]
 report = ["matplotlib>=3.7"]
