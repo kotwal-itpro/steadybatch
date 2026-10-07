@@ -102,3 +102,12 @@ provider's note, so these show up as `truncated (max_tokens): not valid JSON ...
 `--thinking disabled|adaptive`, and each run's summary records the thinking setting and
 `max_tokens`. We keep the default-settings run as published and add a thinking-disabled
 run for the like-for-like comparison with gpt-4.1-mini.
+
+**The thinking-disabled run.** Same 1,000 records, same 300-token budget, with
+`--thinking disabled`: 1,000 of 1,000 on the first attempt, no retries, median batch
+time 304 s instead of 606 s, and $0.048 per 1,000 records instead of $0.053. Sentiment
+accuracy was about the same (91.0% vs 89.1%), but the mistakes changed direction. With
+default settings the most common miss was negative → neutral (50), the way Gemini errs;
+with thinking off it was neutral → negative (54), the way gpt-4.1-mini errs. The two
+Claude runs agreed on sentiment for 88.7% of records. One setting on the same model moved
+which records were wrong, not only how many.
