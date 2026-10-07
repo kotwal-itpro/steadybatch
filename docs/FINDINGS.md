@@ -111,3 +111,26 @@ default settings the most common miss was negative → neutral (50), the way Gem
 with thinking off it was neutral → negative (54), the way gpt-4.1-mini errs. The two
 Claude runs agreed on sentiment for 88.7% of records. One setting on the same model moved
 which records were wrong, not only how many.
+
+## 7. A big job needs to respect the queue limit, and the error doesn't say so (Gemini, 2026-10-07)
+
+**What happened.** For the 100,000-record runs we expected a queue limit on OpenAI, which
+counts the input tokens an account has waiting in batches, so we split that job into
+10,000-record batches sent one at a time. Gemini got a single 100,000-record job (about
+34 million input tokens). The input file took about five minutes to upload, and then
+creating the batch failed with `429 RESOURCE_EXHAUSTED: You exceeded your current quota,
+please check your plan and billing details`. The same job split into 10,000-record
+batches, one at a time, was accepted straight away. Anthropic accepted all 100,000
+requests as one batch.
+
+**Why it matters.** The error reads like a billing or rate-limit problem, not "this batch
+is too big for your queue", and it only arrives after the whole upload. A pipeline that
+retries the same submission on a 429 will keep failing. The fix is to send smaller
+batches, a few at a time.
+
+**What steadybatch did, and what we changed.** The adapter deleted the rejected upload
+(finding 1), nothing was billed, and the checkpoint still had all 100,000 records as
+pending, so the rerun started cleanly. The runner now has `--batch-size` and
+`--max-open-batches` to keep a job under these limits. Open question for a later
+version: catching a submit-time quota error and shrinking the batch automatically
+instead of stopping.
