@@ -1,0 +1,9 @@
+{
+  "_note": "USD per 1M tokens, taken 2026-10-07 from the official pricing pages. batch_multiplier is applied to the listed prices to get batch cost.",
+  "_sources": {
+    "openai": "https://developers.openai.com/api/docs/models/gpt-4.1-mini (standard prices; Batch API is 50% of standard)",
+    "gemini": "https://ai.google.dev/gemini-api/docs/pricing (Batch tier prices listed directly; output includes thinking tokens)"
+  },
+  "openai": {"model": "gpt-4.1-mini", "input_per_mtok": 0.40, "output_per_mtok": 1.60, "batch_multiplier": 0.5},
+  "gemini": {"model": "gemini-3.5-flash-lite", "input_per_mtok": 0.15, "output_per_mtok": 1.25, "batch_multiplier": 1.0}
+}

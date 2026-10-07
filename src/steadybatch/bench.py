@@ -211,11 +211,27 @@ def write_charts(rows: list[dict[str, Any]], out: Path) -> list[str]:
     return made
 
 
+def add_costs(rows: list[dict[str, Any]], prices_path: str) -> None:
+    """Fill in cost for runs whose summary has token counts but no cost yet."""
+    prices = json.loads(Path(prices_path).read_text())
+    for r in rows:
+        p = prices.get(r.get("provider", ""))
+        if not p or "cost_usd" in r:
+            continue
+        if p.get("model") and p["model"] != r.get("model"):
+            continue  # prices were recorded for a different model
+        cost = (r.get("input_tokens", 0) * p["input_per_mtok"] + r.get("output_tokens", 0) * p["output_per_mtok"]) / 1e6 * p.get("batch_multiplier", 1.0)
+        r["cost_usd"] = round(cost, 6)
+        r["cost_per_1000_records_usd"] = round(cost / max(r.get("records", 1), 1) * 1000, 4)
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     rows = load_summaries(args.runs)
     if not rows:
         print("no runs with a summary.json found", file=sys.stderr)
         return 1
+    if args.prices:
+        add_costs(rows, args.prices)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -273,6 +289,7 @@ def main(argv: list[str] | None = None) -> int:
     rep.add_argument("runs", nargs="+", help="run folders that contain summary.json")
     rep.add_argument("--out", default="results/latest")
     rep.add_argument("--no-charts", action="store_true")
+    rep.add_argument("--prices", help="JSON price file; fills in cost for runs that lack it")
     rep.set_defaults(func=cmd_report)
 
     args = parser.parse_args(argv)

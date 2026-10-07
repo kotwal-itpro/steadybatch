@@ -51,3 +51,17 @@ def test_compare_reports_match_rates(tmp_path, capsys):
     assert bench.main(["compare", str(a), str(b)]) == 0
     result = json.loads(capsys.readouterr().out)
     assert result["records_in_both"] == 60 and result["exact_match_rate"] == 1.0
+
+
+def test_report_adds_cost_from_a_price_file(tmp_path):
+    a = run_fake(tmp_path, "run1")
+    summary = json.loads((a / "summary.json").read_text())
+    for k in ("cost_usd", "cost_per_1000_records_usd"):
+        summary.pop(k, None)
+    (a / "summary.json").write_text(json.dumps(summary))
+    prices = tmp_path / "prices.json"
+    prices.write_text(json.dumps({"fake": {"model": "fake", "input_per_mtok": 1.0, "output_per_mtok": 2.0, "batch_multiplier": 0.5}}))
+    out = tmp_path / "report"
+    assert bench.main(["report", str(a), "--out", str(out), "--no-charts", "--prices", str(prices)]) == 0
+    expected = round((summary["input_tokens"] * 1.0 + summary["output_tokens"] * 2.0) / 1e6 * 0.5 / 60 * 1000, 4)
+    assert str(expected) in (out / "summary.md").read_text()

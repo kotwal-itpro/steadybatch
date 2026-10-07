@@ -40,3 +40,20 @@ negative, while our labels meant "the customer explicitly asked to be contacted"
 **What we changed.** Field definitions now go in `examples/support_ticket.instructions.txt`
 and are passed with `--instructions`. Runs without them are kept but marked as v1 and are
 not used for accuracy comparisons.
+
+## 4. Same definition, opposite mistakes (OpenAI and Gemini, 2026-10-07)
+
+**What happened.** At 1,000 records with field definitions, both services returned every
+line with no retries, and both got `product` and `issue_type` 100% right. On `sentiment`
+they missed in opposite directions. gpt-4.1-mini read polite tickets about a problem
+("I was charged twice. Thanks.") as negative: 71 misses, all neutral → negative.
+gemini-3.5-flash-lite read clear frustration ("This is really frustrating.") as neutral:
+158 of its 179 misses were negative → neutral. Our definition says sentiment is the
+attitude toward the product and that "the problem they report does not count on its own";
+one model under-applied that rule and the other over-applied it.
+
+**Why it matters.** Accuracy alone (93% vs 82%) hides that the two models fail differently.
+Switching providers on the same prompt changes which records are wrong, not only how many.
+
+**Measurement note.** Batch turnaround is measured at the polling interval (60 s for these
+runs), so a reported 182 s means "finished between the 3rd and 4th poll".
