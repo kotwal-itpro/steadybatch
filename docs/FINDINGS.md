@@ -117,7 +117,7 @@ which records were wrong, not only how many.
 **What happened.** For the 100,000-record runs we expected a queue limit on OpenAI, which
 counts the input tokens an account has waiting in batches, so we split that job into
 10,000-record batches sent one at a time. Gemini got a single 100,000-record job (about
-34 million input tokens). The input file took about five minutes to upload, and then
+26 million input tokens, going by the 10,000-record run). The input file took about five minutes to upload, and then
 creating the batch failed with `429 RESOURCE_EXHAUSTED: You exceeded your current quota,
 please check your plan and billing details`. The same job split into 10,000-record
 batches, one at a time, was accepted straight away. Anthropic accepted all 100,000
