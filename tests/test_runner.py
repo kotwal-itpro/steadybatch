@@ -101,3 +101,20 @@ def test_truncated_output_keeps_the_reason_in_history():
     report = runner(Truncating(), max_attempts=1).run(requests(2))
     assert all(r.outcome is Outcome.INVALID for r in report.results)
     assert all(r.history[0].startswith("invalid: truncated (max_tokens): not valid JSON") for r in report.results)
+
+
+def test_batch_size_and_max_open_batches_limit_queued_work():
+    provider = FakeProvider()
+    open_counts = []
+    real_submit = provider.submit
+
+    def submit(batch):
+        open_counts.append(len(r.store.open_batches()))
+        return real_submit(batch)
+
+    provider.submit = submit
+    r = runner(provider, batch_size=4, max_open_batches=1)
+    report = r.run(requests(10))
+    assert report.ok == 10 and report.batches_submitted == 3
+    assert [len(b) for b in provider.submitted_batches] == [4, 4, 2]
+    assert open_counts == [0, 0, 0], "each batch should be collected before the next is sent"

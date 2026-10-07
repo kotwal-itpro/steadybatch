@@ -58,6 +58,8 @@ class Runner:
         max_attempts: int = 3,
         poll_every: float = 30.0,
         timeout: float = 26 * 3600,
+        batch_size: int | None = None,
+        max_open_batches: int | None = None,
         sleep: Callable[[float], None] = time.sleep,
         clock: Callable[[], float] = time.monotonic,
     ):
@@ -65,6 +67,10 @@ class Runner:
         self.model = model
         self.schema = response_schema
         self.store = Store(checkpoint)
+        # Providers cap how much work an account can have queued (OpenAI counts queued
+        # input tokens). Smaller batches, fewer at a time, keep a big job under that cap.
+        self.batch_size = batch_size
+        self.max_open_batches = max_open_batches
         self.max_attempts = max_attempts
         self.poll_every = poll_every
         self.timeout = timeout
@@ -90,8 +96,10 @@ class Runner:
             todo = self.store.ready_to_submit(self.max_attempts)
             if not todo:
                 break
-            for batch in chunk(todo, self.provider.max_requests_per_batch,
-                               self.provider.max_bytes_per_batch, self.provider.size_of):
+            max_count = min(self.provider.max_requests_per_batch, self.batch_size or self.provider.max_requests_per_batch)
+            for batch in chunk(todo, max_count, self.provider.max_bytes_per_batch, self.provider.size_of):
+                if self.max_open_batches and len(self.store.open_batches()) >= self.max_open_batches:
+                    self._collect_open(report, started)
                 batch_id = self.provider.submit(batch)
                 self.store.mark_submitted(batch_id, self.provider.name, [r.custom_id for r in batch])
                 report.batches_submitted += 1

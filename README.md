@@ -73,8 +73,8 @@ steadybatch-bench run --provider fake --model fake \
   --out runs/fake-1 --prices examples/prices.example.json --poll-every 0
 
 # run it for real, twice, then compare the two runs
-steadybatch-bench run --provider openai --model gpt-4o-mini ... --out runs/openai-1
-steadybatch-bench run --provider openai --model gpt-4o-mini ... --out runs/openai-2
+steadybatch-bench run --provider openai --model gpt-4.1-mini ... --out runs/openai-1
+steadybatch-bench run --provider openai --model gpt-4.1-mini ... --out runs/openai-2
 steadybatch-bench compare runs/openai-1 runs/openai-2
 ```
 
@@ -96,6 +96,30 @@ steadybatch-bench report runs/openai-1 runs/gemini-1 --out results/latest
 
 Published results go in [results/](results/), one folder per run.
 
+Useful `run` options for real jobs:
+- `--instructions FILE` adds plain-language field definitions to the prompt (see finding 3 below for why this matters)
+- `--batch-size N` and `--max-open-batches N` keep a big job under a provider's queue limit
+- `--thinking disabled|adaptive` (Anthropic) sets thinking explicitly instead of using the model default
+
+### Results so far
+
+1,000 synthetic support tickets with known answers, the same schema and field definitions on every provider, batch prices taken on 2026-10-07. Full tables: [results/latest/summary.md](results/latest/summary.md).
+
+| Model | Returned | Retries | Sentiment accuracy | Median batch time | Cost per 1,000 records |
+|---|---|---|---|---|---|
+| gpt-4.1-mini (OpenAI) | 1,000 / 1,000 | 0 | 92.9% | 4 min | $0.085 |
+| gemini-3.5-flash-lite (Gemini) | 1,000 / 1,000 | 0 | 82.1% | 3 min | $0.088 |
+| claude-haiku-5-5, default settings (Anthropic) | 999 / 1,000 | 10 | 89.1% | 10 min | $0.053 |
+| claude-haiku-5-5, thinking disabled (Anthropic) | 1,000 / 1,000 | 0 | 91.0% | 5 min | $0.048 |
+
+All four got product and issue type 100% right. At 10,000 records, OpenAI and Gemini again returned every line with no retries. What we learned along the way, including our own mistakes, is in [docs/FINDINGS.md](docs/FINDINGS.md). The short version:
+- A model listed as available can still be refused when the batch is created.
+- Undefined fields look like model errors: one plain sentence per field took follow-up accuracy from 31% to 98-100%.
+- Models fail in different directions under the same instructions, and one setting (Claude's thinking) flipped the direction on the same model.
+- A model that decides for itself when to think can use up the whole `max_tokens` budget and return nothing.
+
+Write-up: [I Gave Two AI Models the Same Instructions. They Got It Wrong in Opposite Ways.](https://kotwal-itpro.github.io/2026/10/07/same-instructions-opposite-mistakes/)
+
 Fill in `examples/prices.example.json` from each provider's pricing page on the day you run, and record the date with your results. Prices change.
 
 ## Running on Kubernetes
@@ -115,7 +139,7 @@ The tests use a fake provider that drops lines, returns errors, sends malformed 
 
 ## Status
 
-Early, and moving. The core is tested; the OpenAI, Gemini and Anthropic adapters follow each provider's documented batch API and have unit tests against stand-in clients. They will be checked against the live services as the benchmark runs. Issues and pull requests are welcome.
+Early, and moving. The core is tested against a fake provider that misbehaves on purpose. The OpenAI, Gemini and Anthropic adapters have run real jobs of 1,000 to 10,000 records against the live services (100,000 is in progress). The vLLM adapter is unit-tested; its first GPU run is next. Issues and pull requests are welcome.
 
 ## Citing
 

@@ -72,7 +72,8 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     runner = Runner(get_provider(args.provider, args.model, thinking=args.thinking), args.model, response_schema=schema,
                     checkpoint=out / "checkpoint.sqlite", max_attempts=args.max_attempts,
-                    poll_every=args.poll_every)
+                    poll_every=args.poll_every, batch_size=args.batch_size,
+                    max_open_batches=args.max_open_batches)
     instructions = Path(args.instructions).read_text() if args.instructions else ""
     report = runner.run(to_requests(records, args.max_tokens, instructions))
 
@@ -278,6 +279,9 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--limit", type=int)
     run.add_argument("--max-tokens", type=int, default=512)
     run.add_argument("--max-attempts", type=int, default=3)
+    run.add_argument("--batch-size", type=int, help="at most this many requests per batch")
+    run.add_argument("--max-open-batches", type=int,
+                     help="wait for open batches to finish before submitting more than this many")
     run.add_argument("--thinking", choices=["disabled", "adaptive"],
                      help="Anthropic only: set thinking explicitly instead of using the model default")
     run.add_argument("--poll-every", type=float, default=60.0)
