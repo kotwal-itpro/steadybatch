@@ -7,6 +7,14 @@ authors:
     given-names: Ankur Partap
     orcid: "https://orcid.org/0009-0009-4790-6866"
 repository-code: "https://github.com/kotwal-itpro/steadybatch"
+doi: "10.5281/zenodo.23221956"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.23221956"
+    description: "All versions (concept DOI)"
+  - type: doi
+    value: "10.5281/zenodo.23221957"
+    description: "v0.1.0"
 license: Apache-2.0
 version: 0.1.0
 date-released: "2026-10-07"

@@ -1,6 +1,7 @@
 # steadybatch
 
 [![tests](https://github.com/kotwal-itpro/steadybatch/actions/workflows/tests.yml/badge.svg)](https://github.com/kotwal-itpro/steadybatch/actions/workflows/tests.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23221956.svg)](https://doi.org/10.5281/zenodo.23221956)
 
 Run millions of LLM requests through batch APIs, and know that every one of them came back right.
 
@@ -143,7 +144,7 @@ Early, and moving. The core is tested against a fake provider that misbehaves on
 
 ## Citing
 
-If you use steadybatch or the benchmark results in your work, please cite it (see [CITATION.cff](CITATION.cff)).
+If you use steadybatch or the benchmark results in your work, please cite it: Kotwal, A. P. *steadybatch: reliable batch LLM inference*. Zenodo. https://doi.org/10.5281/zenodo.23221956 (see [CITATION.cff](CITATION.cff)).
 
 ## License
 
