@@ -8,3 +8,4 @@ runs/
 *.sqlite
 .pytest_cache/
 examples/support_tickets.jsonl
+*.log
