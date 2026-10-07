@@ -50,7 +50,7 @@ requests = [
     for row_id, text in my_rows
 ]
 
-runner = Runner(OpenAIBatch(), "gpt-4o-mini", response_schema=schema, checkpoint="job.sqlite")
+runner = Runner(OpenAIBatch(), "gpt-4.1-mini", response_schema=schema, checkpoint="job.sqlite")
 report = runner.run(requests)
 
 print(report.ok, "ok,", report.failed, "failed")
@@ -59,6 +59,8 @@ for r in report.results:          # same order as `requests`
 ```
 
 Run the same script again after a crash and it carries on from `job.sqlite`.
+
+Before a big job, read [docs/GUIDE.md](docs/GUIDE.md): ten steps for running a batch job you can trust, each one learned from a real run.
 
 ## The benchmark
 
