@@ -1,0 +1,30 @@
+{
+  "provider": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "instructions_file": "examples/support_ticket.instructions.txt",
+  "records": 100,
+  "ok": 100,
+  "failed_after_retries": 0,
+  "outcomes": {
+    "ok": 100,
+    "error": 0,
+    "missing": 0,
+    "invalid": 0
+  },
+  "lines_missing_seen": 0,
+  "lines_errored_seen": 0,
+  "lines_invalid_seen": 0,
+  "batches_submitted": 1,
+  "retried_records": 0,
+  "input_tokens": 25700,
+  "output_tokens": 3987,
+  "wall_seconds": 187.3,
+  "batch_seconds_median": 182.4,
+  "batch_seconds_max": 182.4,
+  "field_accuracy": {
+    "product": 1.0,
+    "issue_type": 1.0,
+    "sentiment": 0.84,
+    "needs_follow_up": 1.0
+  }
+}

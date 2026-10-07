@@ -1,0 +1,29 @@
+{
+  "provider": "gemini",
+  "model": "gemini-3.5-flash-lite",
+  "records": 100,
+  "ok": 100,
+  "failed_after_retries": 0,
+  "outcomes": {
+    "ok": 100,
+    "error": 0,
+    "missing": 0,
+    "invalid": 0
+  },
+  "lines_missing_seen": 0,
+  "lines_errored_seen": 0,
+  "lines_invalid_seen": 0,
+  "batches_submitted": 1,
+  "retried_records": 0,
+  "input_tokens": 9200,
+  "output_tokens": 3941,
+  "wall_seconds": 216.9,
+  "batch_seconds_median": 212.8,
+  "batch_seconds_max": 212.8,
+  "field_accuracy": {
+    "product": 1.0,
+    "issue_type": 1.0,
+    "sentiment": 0.74,
+    "needs_follow_up": 0.31
+  }
+}

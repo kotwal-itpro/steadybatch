@@ -42,9 +42,10 @@ def load_records(path: Path, limit: int | None) -> list[dict[str, Any]]:
     return records
 
 
-def to_requests(records: list[dict[str, Any]], max_tokens: int) -> list[Request]:
+def to_requests(records: list[dict[str, Any]], max_tokens: int, instructions: str = "") -> list[Request]:
+    system = SYSTEM_PROMPT + ("\n\n" + instructions.strip() if instructions.strip() else "")
     return [
-        Request(key=str(r["key"]), system=SYSTEM_PROMPT, max_tokens=max_tokens, temperature=0.0,
+        Request(key=str(r["key"]), system=system, max_tokens=max_tokens, temperature=0.0,
                 messages=[{"role": "user", "content": r["text"]}])
         for r in records
     ]
@@ -72,7 +73,8 @@ def cmd_run(args: argparse.Namespace) -> int:
     runner = Runner(get_provider(args.provider, args.model), args.model, response_schema=schema,
                     checkpoint=out / "checkpoint.sqlite", max_attempts=args.max_attempts,
                     poll_every=args.poll_every)
-    report = runner.run(to_requests(records, args.max_tokens))
+    instructions = Path(args.instructions).read_text() if args.instructions else ""
+    report = runner.run(to_requests(records, args.max_tokens, instructions))
 
     with (out / "results.jsonl").open("w") as f:
         for r in report.results:
@@ -84,6 +86,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     summary: dict[str, Any] = {
         "provider": args.provider,
         "model": args.model,
+        "instructions_file": args.instructions,
         "records": len(records),
         "ok": report.ok,
         "failed_after_retries": report.failed,
@@ -252,6 +255,7 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--model", required=True)
     run.add_argument("--data", required=True)
     run.add_argument("--schema")
+    run.add_argument("--instructions", help="text file with field definitions, added to the system prompt")
     run.add_argument("--out", required=True)
     run.add_argument("--limit", type=int)
     run.add_argument("--max-tokens", type=int, default=512)

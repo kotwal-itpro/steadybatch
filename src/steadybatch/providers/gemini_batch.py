@@ -60,8 +60,16 @@ class GeminiBatch(BatchProvider):
         uploaded = self.client.files.upload(
             file=io.BytesIO(payload), config={"mime_type": "jsonl", "display_name": "steadybatch-input"}
         )
-        job = self.client.batches.create(model=models.pop(), src=uploaded.name,
-                                         config={"display_name": "steadybatch"})
+        try:
+            job = self.client.batches.create(model=models.pop(), src=uploaded.name,
+                                             config={"display_name": "steadybatch"})
+        except Exception:
+            # Don't leave the uploaded input behind if the job is rejected (e.g. retired model).
+            try:
+                self.client.files.delete(name=uploaded.name)
+            except Exception:
+                pass
+            raise
         return job.name
 
     def status(self, batch_id: str) -> BatchStatus:

@@ -1,0 +1,6 @@
+Fill in each field using these definitions:
+
+- product: the product the customer is contacting support about.
+- issue_type: "billing" for charges or invoices, "shipping" for late or misdelivered orders, "defect" for a product that is broken or misbehaving, "how_to" for questions about how to use or set up the product.
+- sentiment: the customer's attitude toward the product itself. "positive" if they say something good about it, "negative" if they express frustration or unhappiness, "neutral" if they do neither. The problem they report does not count on its own.
+- needs_follow_up: true only if the customer explicitly asks to be contacted again (for example asks for a call back or an email). Otherwise false.

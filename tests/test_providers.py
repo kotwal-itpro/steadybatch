@@ -164,3 +164,33 @@ def test_gemini_partial_success_counts_as_done_so_missing_lines_get_retried():
     p = GeminiBatch(client=NS(batches=NS(get=lambda name: job)))
     assert p.status("b").state is BatchState.DONE
     assert list(p.results("b")) == []
+
+
+def test_openai_reasoning_models_use_max_completion_tokens_and_no_temperature():
+    gpt5 = PreparedRequest("sb-2", Request(key="k", messages=[{"role": "user", "content": "hi"}]), "gpt-5-mini")
+    body = OpenAIBatch(client=object()).to_line(gpt5)["body"]
+    assert body["max_completion_tokens"] == 1024
+    assert "max_tokens" not in body and "temperature" not in body
+    body = OpenAIBatch(client=object()).to_line(prepared())["body"]   # model "m": a regular chat model
+    assert body["max_tokens"] == 1024 and body["temperature"] == 0.0
+
+
+def test_rejected_gemini_job_deletes_its_uploaded_file():
+    import pytest
+    deleted = []
+
+    class Files:
+        def upload(self, file, config):
+            return NS(name="files/in")
+
+        def delete(self, name):
+            deleted.append(name)
+
+    class Batches:
+        def create(self, **kw):
+            raise RuntimeError("404 model no longer available to new users")
+
+    p = GeminiBatch(client=NS(files=Files(), batches=Batches()))
+    with pytest.raises(RuntimeError):
+        p.submit([prepared()])
+    assert deleted == ["files/in"]

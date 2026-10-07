@@ -13,6 +13,13 @@ from typing import Iterator
 from ..models import BatchState, BatchStatus, PreparedRequest, RawResult
 from .base import BatchProvider
 
+_REASONING_PREFIXES = ("gpt-5", "o1", "o3", "o4")
+
+
+def is_reasoning_model(model: str) -> bool:
+    return model.startswith(_REASONING_PREFIXES)
+
+
 _DONE = {"completed"}
 _FAILED = {"failed", "expired", "cancelled", "cancelling"}
 
@@ -33,12 +40,13 @@ class OpenAIBatch(BatchProvider):
         messages = list(req.request.messages)
         if req.request.system:
             messages = [{"role": "system", "content": req.request.system}] + messages
-        body = {
-            "model": req.model,
-            "messages": messages,
-            "max_tokens": req.request.max_tokens,
-            "temperature": req.request.temperature,
-        }
+        body = {"model": req.model, "messages": messages}
+        if is_reasoning_model(req.model):
+            # GPT-5 and o-series models reject max_tokens and any non-default temperature.
+            body["max_completion_tokens"] = req.request.max_tokens
+        else:
+            body["max_tokens"] = req.request.max_tokens
+            body["temperature"] = req.request.temperature
         if req.response_schema is not None:
             body["response_format"] = {
                 "type": "json_schema",
@@ -50,9 +58,17 @@ class OpenAIBatch(BatchProvider):
     def submit(self, batch: list[PreparedRequest]) -> str:
         payload = "\n".join(json.dumps(self.to_line(r)) for r in batch).encode("utf-8")
         upload = self.client.files.create(file=("batch.jsonl", payload), purpose="batch")
-        created = self.client.batches.create(
-            input_file_id=upload.id, endpoint="/v1/chat/completions", completion_window="24h"
-        )
+        try:
+            created = self.client.batches.create(
+                input_file_id=upload.id, endpoint="/v1/chat/completions", completion_window="24h"
+            )
+        except Exception:
+            # Don't leave the uploaded input behind if the batch is rejected.
+            try:
+                self.client.files.delete(upload.id)
+            except Exception:
+                pass
+            raise
         return created.id
 
     def status(self, batch_id: str) -> BatchStatus:
