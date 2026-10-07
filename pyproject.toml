@@ -23,6 +23,7 @@ openai = ["openai>=1.40"]
 anthropic = ["anthropic>=0.40"]
 gemini = ["google-genai>=1.20"]
 vllm = ["vllm>=0.6"]
+report = ["matplotlib>=3.7"]
 dev = ["pytest>=8"]
 
 [project.scripts]

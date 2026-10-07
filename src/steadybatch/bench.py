@@ -135,6 +135,114 @@ def cmd_compare(args: argparse.Namespace) -> int:
     return 0
 
 
+REPORT_COLUMNS = [
+    ("run", "Run"),
+    ("provider", "Provider"),
+    ("model", "Model"),
+    ("records", "Records"),
+    ("ok", "OK"),
+    ("failed_after_retries", "Failed"),
+    ("lines_missing_seen", "Missing"),
+    ("lines_errored_seen", "Errored"),
+    ("lines_invalid_seen", "Invalid"),
+    ("retried_records", "Retried"),
+    ("batch_seconds_median", "Median batch (s)"),
+    ("batch_seconds_max", "Slowest batch (s)"),
+    ("cost_per_1000_records_usd", "Cost per 1k ($)"),
+    ("mean_field_accuracy", "Accuracy"),
+]
+
+
+def load_summaries(run_dirs: list[str]) -> list[dict[str, Any]]:
+    rows = []
+    for d in run_dirs:
+        path = Path(d) / "summary.json"
+        if not path.exists():
+            print(f"skipping {d}: no summary.json", file=sys.stderr)
+            continue
+        s = json.loads(path.read_text())
+        s["run"] = Path(d).name
+        acc = s.get("field_accuracy") or {}
+        if acc:
+            s["mean_field_accuracy"] = round(sum(acc.values()) / len(acc), 4)
+        rows.append(s)
+    return rows
+
+
+def write_charts(rows: list[dict[str, Any]], out: Path) -> list[str]:
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("matplotlib not installed; skipping charts (pip install matplotlib)", file=sys.stderr)
+        return []
+    labels = [r["run"] for r in rows]
+    made = []
+
+    fig, ax = plt.subplots(figsize=(max(6, len(rows) * 1.2), 4))
+    bottom = [0] * len(rows)
+    for key, name in [("lines_missing_seen", "Missing"), ("lines_errored_seen", "Errored"),
+                      ("lines_invalid_seen", "Invalid JSON")]:
+        vals = [100 * r.get(key, 0) / max(r.get("records", 1), 1) for r in rows]
+        ax.bar(labels, vals, bottom=bottom, label=name)
+        bottom = [b + v for b, v in zip(bottom, vals)]
+    ax.set_ylabel("% of records (before retries)")
+    ax.set_title("Problems caught per run")
+    ax.legend(loc="upper left", bbox_to_anchor=(1.01, 1), frameon=False)
+    fig.tight_layout()
+    fig.savefig(out / "problems.png", dpi=150)
+    plt.close(fig)
+    made.append("problems.png")
+
+    costs = [(r["run"], r["cost_per_1000_records_usd"]) for r in rows if "cost_per_1000_records_usd" in r]
+    if costs:
+        fig, ax = plt.subplots(figsize=(max(6, len(costs) * 1.2), 4))
+        ax.bar([c[0] for c in costs], [c[1] for c in costs])
+        ax.set_ylabel("USD per 1,000 records (incl. retries)")
+        ax.set_title("Cost per 1,000 records")
+        fig.tight_layout()
+        fig.savefig(out / "cost.png", dpi=150)
+        plt.close(fig)
+        made.append("cost.png")
+    return made
+
+
+def cmd_report(args: argparse.Namespace) -> int:
+    rows = load_summaries(args.runs)
+    if not rows:
+        print("no runs with a summary.json found", file=sys.stderr)
+        return 1
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+
+    def cell(row: dict[str, Any], key: str) -> str:
+        v = row.get(key)
+        return "" if v is None else str(v)
+
+    header = [name for _, name in REPORT_COLUMNS]
+    lines = ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)]
+    for r in rows:
+        lines.append("| " + " | ".join(cell(r, k) for k, _ in REPORT_COLUMNS) + " |")
+
+    import csv
+    with (out / "summary.csv").open("w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(header)
+        for r in rows:
+            w.writerow([cell(r, k) for k, _ in REPORT_COLUMNS])
+
+    charts = [] if args.no_charts else write_charts(rows, out)
+    md = ["# Benchmark results", "",
+          "Counts of missing, errored and invalid lines are before retries; "
+          "OK and Failed are after retries.", "", *lines, ""]
+    md += [f"![{c}]({c})" for c in charts]
+    (out / "summary.md").write_text("\n".join(md) + "\n")
+    print("\n".join(lines))
+    print(f"\nwrote {out / 'summary.md'} and {out / 'summary.csv'}" + (f" and {len(charts)} charts" if charts else ""))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="steadybatch-bench")
     sub = parser.add_subparsers(dest="cmd", required=True)
@@ -156,6 +264,12 @@ def main(argv: list[str] | None = None) -> int:
     cmp_.add_argument("run_a")
     cmp_.add_argument("run_b")
     cmp_.set_defaults(func=cmd_compare)
+
+    rep = sub.add_parser("report", help="turn run summaries into a table, CSV and charts")
+    rep.add_argument("runs", nargs="+", help="run folders that contain summary.json")
+    rep.add_argument("--out", default="results/latest")
+    rep.add_argument("--no-charts", action="store_true")
+    rep.set_defaults(func=cmd_report)
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")

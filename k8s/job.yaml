@@ -26,7 +26,8 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - >
-              pip install --quiet "steadybatch[openai]" &&
+              apt-get update -qq && apt-get install -y -qq git >/dev/null &&
+              pip install --quiet "steadybatch[openai] @ git+https://github.com/kotwal-itpro/steadybatch.git" &&
               steadybatch-bench run --provider openai --model gpt-4o-mini
               --data /data/support_tickets.jsonl
               --schema /data/support_ticket.schema.json

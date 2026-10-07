@@ -1,5 +1,7 @@
 # steadybatch
 
+[![tests](https://github.com/kotwal-itpro/steadybatch/actions/workflows/tests.yml/badge.svg)](https://github.com/kotwal-itpro/steadybatch/actions/workflows/tests.yml)
+
 Run millions of LLM requests through batch APIs, and know that every one of them came back right.
 
 Batch APIs are the cheapest way to run a model over a lot of data. You upload a file, wait a few hours, and pay about half the normal price. They also fail in quiet ways:
@@ -24,8 +26,11 @@ It works with the OpenAI Batch API, Gemini API batch mode, the Anthropic Message
 
 ## Quick start
 
+steadybatch isn't on PyPI yet, so install it straight from GitHub. Pick the providers you need in the brackets:
+
 ```bash
-pip install "steadybatch[openai]"   # or [gemini], [anthropic], [vllm]
+pip install "steadybatch[openai,gemini] @ git+https://github.com/kotwal-itpro/steadybatch.git"
+# other options: anthropic, vllm
 ```
 
 ```python
@@ -82,6 +87,15 @@ Each run writes `results.jsonl` (one line per record, in input order) and `summa
 
 `compare` reports how often two runs of the same workload agree, both exactly and field by field.
 
+To turn any set of runs into one table, a CSV and charts:
+
+```bash
+pip install matplotlib   # optional, for the charts
+steadybatch-bench report runs/openai-1 runs/gemini-1 --out results/latest
+```
+
+Published results go in [results/](results/), one folder per run.
+
 Fill in `examples/prices.example.json` from each provider's pricing page on the day you run, and record the date with your results. Prices change.
 
 ## Running on Kubernetes
@@ -91,6 +105,8 @@ A batch job fits well as a Kubernetes Job. Keep the checkpoint on a persistent v
 ## Testing
 
 ```bash
+git clone https://github.com/kotwal-itpro/steadybatch.git
+cd steadybatch
 pip install -e ".[dev]"
 pytest
 ```
