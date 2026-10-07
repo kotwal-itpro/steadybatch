@@ -47,6 +47,9 @@ class BatchStatus:
     succeeded: int = 0
     failed: int = 0
     detail: str = ""
+    # True when the provider refused the work because the account's queue is full,
+    # not because anything is wrong with the requests.
+    over_capacity: bool = False
 
 
 @dataclass

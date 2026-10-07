@@ -71,9 +71,17 @@ class OpenAIBatch(BatchProvider):
             raise
         return created.id
 
+    def is_over_capacity(self, exc: Exception) -> bool:
+        return getattr(exc, "status_code", None) == 429 or "token_limit_exceeded" in str(exc)
+
     def status(self, batch_id: str) -> BatchStatus:
         b = self.client.batches.retrieve(batch_id)
         counts = b.request_counts
+        # Over the enqueued-token limit, OpenAI accepts the batch and then fails it
+        # during validation with error code token_limit_exceeded.
+        errors = getattr(getattr(b, "errors", None), "data", None) or []
+        over_capacity = b.status == "failed" and any(
+            getattr(e, "code", None) == "token_limit_exceeded" for e in errors)
         if b.status in _DONE:
             state = BatchState.DONE
         elif b.status in _FAILED:
@@ -84,7 +92,8 @@ class OpenAIBatch(BatchProvider):
             state = BatchState.RUNNING
         return BatchStatus(state, total=getattr(counts, "total", 0) or 0,
                            succeeded=getattr(counts, "completed", 0) or 0,
-                           failed=getattr(counts, "failed", 0) or 0, detail=b.status)
+                           failed=getattr(counts, "failed", 0) or 0, detail=b.status,
+                           over_capacity=over_capacity)
 
     def results(self, batch_id: str) -> Iterator[RawResult]:
         b = self.client.batches.retrieve(batch_id)

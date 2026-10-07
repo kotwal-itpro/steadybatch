@@ -242,3 +242,29 @@ def test_vllm_submit_maps_outputs_in_order_and_flags_truncation():
     assert [(r.custom_id, r.input_tokens, r.output_tokens) for r in out] == [("a", 3, 2), ("b", 1, 1)]
     assert out[0].error is None and "truncated" in out[1].error
     assert p.status(bid).state is BatchState.DONE
+
+
+def test_each_adapter_recognises_a_full_queue():
+    class APIError(Exception):
+        def __init__(self, msg, status_code=None, code=None):
+            super().__init__(msg)
+            self.status_code, self.code = status_code, code
+
+    assert GeminiBatch(client=object()).is_over_capacity(APIError("429 RESOURCE_EXHAUSTED", code=429))
+    assert not GeminiBatch(client=object()).is_over_capacity(APIError("404 NOT_FOUND", code=404))
+    assert AnthropicBatch(client=object()).is_over_capacity(APIError("rate limited", status_code=429))
+    assert not AnthropicBatch(client=object()).is_over_capacity(APIError("bad", status_code=400))
+    assert OpenAIBatch(client=object()).is_over_capacity(APIError("too many", status_code=429))
+    assert not OpenAIBatch(client=object()).is_over_capacity(APIError("bad", status_code=400))
+
+
+def test_openai_status_flags_token_limit_exceeded():
+    def batch(status, codes):
+        return NS(status=status, request_counts=NS(total=10, completed=0, failed=0),
+                  errors=NS(data=[NS(code=c, message="Enqueued token limit reached") for c in codes]))
+
+    for b, expected in [(batch("failed", ["token_limit_exceeded"]), True),
+                        (batch("failed", ["invalid_request"]), False),
+                        (batch("completed", []), False)]:
+        client = NS(batches=NS(retrieve=lambda bid, b=b: b))
+        assert OpenAIBatch(client=client).status("x").over_capacity is expected

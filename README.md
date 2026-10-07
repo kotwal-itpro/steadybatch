@@ -99,7 +99,7 @@ Published results go in [results/](results/), one folder per run.
 
 Useful `run` options for real jobs:
 - `--instructions FILE` adds plain-language field definitions to the prompt (see finding 3 below for why this matters)
-- `--batch-size N` and `--max-open-batches N` keep a big job under a provider's queue limit
+- `--batch-size N` and `--max-open-batches N` keep a big job under a provider's queue limit. If a provider still says its queue is full, the runner waits for its own batches or halves the batch size and retries, without using up any request's retries (finding 7)
 - `--thinking disabled|adaptive` (Anthropic) sets thinking explicitly instead of using the model default
 
 ### Results so far

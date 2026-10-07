@@ -8,6 +8,8 @@ The rules it follows:
 * Every answer is checked against the schema before it counts as a success.
 * One bad line never fails the batch. Only that line is retried.
 * State is saved after every step, so a restart picks up where it stopped.
+* A provider that refuses a batch because the queue is full gets smaller
+  batches, without using up any request's retries.
 """
 
 from __future__ import annotations
@@ -20,7 +22,7 @@ from typing import Any, Callable, Iterable
 
 from .chunking import chunk
 from .ids import custom_id_for
-from .models import BatchState, Outcome, PreparedRequest, Request, Result
+from .models import BatchState, BatchStatus, Outcome, PreparedRequest, Request, Result
 from .providers.base import BatchProvider
 from .store import Store
 from .validate import InvalidOutput, check
@@ -35,6 +37,7 @@ class RunReport:
     lines_missing: int = 0
     lines_errored: int = 0
     lines_invalid: int = 0
+    capacity_refusals: int = 0
     seconds: float = 0.0
     batch_seconds: list[float] = field(default_factory=list)
 
@@ -71,6 +74,7 @@ class Runner:
         # input tokens). Smaller batches, fewer at a time, keep a big job under that cap.
         self.batch_size = batch_size
         self.max_open_batches = max_open_batches
+        self._size_limit: int | None = None  # lowered when the provider says the queue is full
         self.max_attempts = max_attempts
         self.poll_every = poll_every
         self.timeout = timeout
@@ -96,14 +100,23 @@ class Runner:
             todo = self.store.ready_to_submit(self.max_attempts)
             if not todo:
                 break
-            max_count = min(self.provider.max_requests_per_batch, self.batch_size or self.provider.max_requests_per_batch)
-            for batch in chunk(todo, max_count, self.provider.max_bytes_per_batch, self.provider.size_of):
+            while todo:
+                batch = next(chunk(todo, self._max_count(), self.provider.max_bytes_per_batch,
+                                   self.provider.size_of))
                 if self.max_open_batches and len(self.store.open_batches()) >= self.max_open_batches:
                     self._collect_open(report, started)
-                batch_id = self.provider.submit(batch)
+                try:
+                    batch_id = self.provider.submit(batch)
+                except Exception as exc:
+                    if not self.provider.is_over_capacity(exc):
+                        raise
+                    report.capacity_refusals += 1
+                    self._on_capacity_refusal(len(batch), report, started, reason=str(exc)[:200])
+                    continue
                 self.store.mark_submitted(batch_id, self.provider.name, [r.custom_id for r in batch])
                 report.batches_submitted += 1
                 log.info("submitted %s with %d requests", batch_id, len(batch))
+                todo = todo[len(batch):]
             self._collect_open(report, started)
 
         self.store.give_up_on_exhausted(self.max_attempts)
@@ -116,11 +129,37 @@ class Runner:
 
     # ------------------------------------------------------------------
 
+    def _max_count(self) -> int:
+        limit = min(self.provider.max_requests_per_batch, self.batch_size or self.provider.max_requests_per_batch)
+        return min(limit, self._size_limit) if self._size_limit else limit
+
+    def _on_capacity_refusal(self, size: int, report: RunReport, started: float, reason: str) -> None:
+        """The queue is full. If our own batches are in it, wait for them; otherwise
+        halve the batch size. Give up only when a single request is refused."""
+        if self.store.open_batches():
+            log.warning("queue full (%s); waiting for open batches before sending more", reason)
+            self._collect_open(report, started)
+            return
+        if size <= 1:
+            raise RuntimeError(f"provider refused even a one-request batch as over capacity: {reason}")
+        self._size_limit = max(1, size // 2)
+        log.warning("queue full (%s); retrying with batches of at most %d", reason, self._size_limit)
+        self.sleep(min(self.poll_every, 60.0))
+
     def _collect_open(self, report: RunReport, started: float) -> None:
         for batch_id, sent_ids in self.store.open_batches():
             status = self._wait(batch_id, started)
+            if status.state is BatchState.FAILED and status.over_capacity:
+                # Refused before any work was done: not the requests' fault.
+                report.capacity_refusals += 1
+                self.store.release_batch(batch_id)
+                if not self.store.open_batches():
+                    self._size_limit = max(1, len(sent_ids) // 2)
+                    log.warning("batch %s refused as over capacity; retrying with batches of at most %d",
+                                batch_id, self._size_limit)
+                continue
             seen: set[str] = set()
-            if status is not BatchState.FAILED:
+            if status.state is not BatchState.FAILED:
                 for raw in self.provider.results(batch_id):
                     if raw.custom_id in seen:
                         continue  # a duplicate line: count it once
@@ -133,13 +172,13 @@ class Runner:
                                       error=f"no result returned by batch {batch_id}")
             self.store.close_batch(batch_id)
 
-    def _wait(self, batch_id: str, started: float) -> BatchState:
+    def _wait(self, batch_id: str, started: float) -> BatchStatus:
         while True:
             status = self.provider.status(batch_id)
             if status.state in (BatchState.DONE, BatchState.FAILED):
                 if status.state is BatchState.FAILED:
                     log.warning("batch %s failed: %s", batch_id, status.detail)
-                return status.state
+                return status
             if self.clock() - started > self.timeout:
                 raise TimeoutError(f"batch {batch_id} still {status.state.value} after timeout")
             self.sleep(self.poll_every)

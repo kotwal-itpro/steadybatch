@@ -131,6 +131,14 @@ batches, a few at a time.
 **What steadybatch did, and what we changed.** The adapter deleted the rejected upload
 (finding 1), nothing was billed, and the checkpoint still had all 100,000 records as
 pending, so the rerun started cleanly. The runner now has `--batch-size` and
-`--max-open-batches` to keep a job under these limits. Open question for a later
-version: catching a submit-time quota error and shrinking the batch automatically
-instead of stopping.
+`--max-open-batches` to keep a job under these limits.
+
+It also handles a full queue on its own now. Each adapter says whether an error means
+"queue full": a 429 at submit on Gemini and Anthropic, and on OpenAI a batch that is
+accepted and then fails validation with `token_limit_exceeded`. When that happens, the
+runner first waits for its own open batches to finish; if none are open, it halves the
+batch size and tries again. The refused requests go back to pending without using up
+any of their retries, and each run's summary counts `capacity_refusals`. It gives up
+only if a single-request batch is refused. This is tested against a fake provider
+with a limited queue in both styles; it has not yet met a real full queue, since our
+live runs now use batch sizes that fit.

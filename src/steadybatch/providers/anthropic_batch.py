@@ -60,6 +60,9 @@ class AnthropicBatch(BatchProvider):
         created = self.client.messages.batches.create(requests=[self.to_line(r) for r in batch])
         return created.id
 
+    def is_over_capacity(self, exc: Exception) -> bool:
+        return getattr(exc, "status_code", None) == 429
+
     def status(self, batch_id: str) -> BatchStatus:
         b = self.client.messages.batches.retrieve(batch_id)
         c = b.request_counts

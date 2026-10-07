@@ -28,6 +28,14 @@ class BatchProvider(ABC):
         """The provider-specific JSON for one request. Used for sizing and upload."""
         return {"custom_id": req.custom_id, "messages": req.request.messages}
 
+    def is_over_capacity(self, exc: Exception) -> bool:
+        """True if `submit` failed because the account's queue or quota is full.
+
+        The runner then sends smaller batches instead of stopping. Providers that
+        can tell this apart from other errors override it.
+        """
+        return False
+
     @abstractmethod
     def submit(self, batch: list[PreparedRequest]) -> str:
         """Send a batch. Return the provider's batch ID."""

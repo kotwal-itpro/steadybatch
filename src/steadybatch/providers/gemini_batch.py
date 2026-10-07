@@ -72,6 +72,11 @@ class GeminiBatch(BatchProvider):
             raise
         return job.name
 
+    def is_over_capacity(self, exc: Exception) -> bool:
+        # A batch over the queue limit fails at creation with a generic
+        # "429 RESOURCE_EXHAUSTED ... exceeded your current quota" (FINDINGS #7).
+        return getattr(exc, "code", None) == 429 or "RESOURCE_EXHAUSTED" in str(exc)
+
     def status(self, batch_id: str) -> BatchStatus:
         job = self.client.batches.get(name=batch_id)
         state_name = getattr(job.state, "name", str(job.state))

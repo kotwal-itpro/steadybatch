@@ -148,6 +148,17 @@ class Store:
         ).fetchall()
         return [(r["batch_id"], json.loads(r["custom_ids"])) for r in rows]
 
+    def release_batch(self, batch_id: str) -> None:
+        """The provider refused this batch before doing any work: put its requests
+        back as pending and give back the attempt, then close the batch."""
+        with self.db:
+            self.db.execute(
+                "UPDATE requests SET state = 'pending', attempts = attempts - 1, batch_id = NULL "
+                "WHERE batch_id = ? AND state = 'submitted'",
+                (batch_id,),
+            )
+        self.close_batch(batch_id)
+
     def close_batch(self, batch_id: str) -> None:
         with self.db:
             self.db.execute(
