@@ -1,0 +1,14 @@
+{
+  "type": "object",
+  "properties": {
+    "product": {
+      "type": "string",
+      "enum": ["router", "laptop", "phone", "smart thermostat", "wireless earbuds", "printer"]
+    },
+    "issue_type": {"type": "string", "enum": ["billing", "shipping", "defect", "how_to"]},
+    "sentiment": {"type": "string", "enum": ["negative", "neutral", "positive"]},
+    "needs_follow_up": {"type": "boolean"}
+  },
+  "required": ["product", "issue_type", "sentiment", "needs_follow_up"],
+  "additionalProperties": false
+}

@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software or its benchmark results, please cite it as below."
+title: "steadybatch: reliable batch LLM inference"
+type: software
+authors:
+  - family-names: Kotwal
+    given-names: Ankur Partap
+    orcid: "https://orcid.org/0009-0009-4790-6866"
+repository-code: "https://github.com/kotwal-itpro/steadybatch"
+license: Apache-2.0
+version: 0.1.0
+date-released: "2026-10-07"
+keywords:
+  - large language models
+  - batch inference
+  - reliability
+  - benchmarking

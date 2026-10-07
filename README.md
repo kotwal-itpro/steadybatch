@@ -1,0 +1,110 @@
+# steadybatch
+
+Run millions of LLM requests through batch APIs, and know that every one of them came back right.
+
+Batch APIs are the cheapest way to run a model over a lot of data. You upload a file, wait a few hours, and pay about half the normal price. They also fail in quiet ways:
+
+- A batch says "completed", but some of your lines never came back. No error, they're just gone.
+- A line comes back, but it isn't the JSON you asked for, or it was cut off halfway.
+- You re-run the same batch and get different answers.
+- Your job crashes halfway through, and you can't tell what you already paid for.
+
+If you're turning a million documents into structured data, each of those turns into a wrong number somewhere downstream. steadybatch handles them for you.
+
+## What it does
+
+- **Checks off every request.** Each request gets a stable ID. When a batch finishes, steadybatch checks that every ID came back. Anything missing is marked and retried.
+- **Checks every answer.** Each response is parsed and validated against your JSON Schema before it counts as done.
+- **Retries one line, not the whole batch.** A bad line goes back on its own. Good lines are never paid for twice.
+- **Survives restarts.** Progress is saved to a small SQLite file after every step. If the process dies, run it again: open batches are picked up, not resubmitted, and finished work is skipped.
+- **Gives results back in your order.** Whatever order the provider returns things in, you get them back in the order you sent them.
+- **Stays under provider limits.** Work is split so each batch stays under the provider's count and size caps.
+
+It works with the OpenAI Batch API, the Anthropic Message Batches API, and self-hosted vLLM. Gemini and Bedrock are next (see [docs/ROADMAP.md](docs/ROADMAP.md)).
+
+## Quick start
+
+```bash
+pip install "steadybatch[openai]"   # or [anthropic], [vllm]
+```
+
+```python
+from steadybatch import Request, Runner
+from steadybatch.providers.openai_batch import OpenAIBatch
+
+schema = {
+    "type": "object",
+    "properties": {"sentiment": {"type": "string", "enum": ["negative", "neutral", "positive"]}},
+    "required": ["sentiment"],
+    "additionalProperties": False,
+}
+
+requests = [
+    Request(key=row_id, messages=[{"role": "user", "content": f"Sentiment of: {text}"}])
+    for row_id, text in my_rows
+]
+
+runner = Runner(OpenAIBatch(), "gpt-4o-mini", response_schema=schema, checkpoint="job.sqlite")
+report = runner.run(requests)
+
+print(report.ok, "ok,", report.failed, "failed")
+for r in report.results:          # same order as `requests`
+    print(r.key, r.outcome.value, r.data)
+```
+
+Run the same script again after a crash and it carries on from `job.sqlite`.
+
+## The benchmark
+
+This repo also holds the harness for an open study comparing batch APIs on cost, turnaround, failure modes and reproducibility. It uses one structured-extraction workload across providers.
+
+```bash
+# make a synthetic dataset with known answers (no private data)
+python examples/make_synthetic.py --n 1000 > examples/support_tickets.jsonl
+
+# try the whole pipeline for free with the built-in fake provider
+steadybatch-bench run --provider fake --model fake \
+  --data examples/support_tickets.jsonl --schema examples/support_ticket.schema.json \
+  --out runs/fake-1 --prices examples/prices.example.json --poll-every 0
+
+# run it for real, twice, then compare the two runs
+steadybatch-bench run --provider openai --model gpt-4o-mini ... --out runs/openai-1
+steadybatch-bench run --provider openai --model gpt-4o-mini ... --out runs/openai-2
+steadybatch-bench compare runs/openai-1 runs/openai-2
+```
+
+Each run writes `results.jsonl` (one line per record, in input order) and `summary.json` with:
+- success and failure counts, including lines that went missing, errored or failed the schema
+- how many records needed a retry
+- token use and cost
+- batch turnaround times
+- field-by-field accuracy against the known answers
+
+`compare` reports how often two runs of the same workload agree, both exactly and field by field.
+
+Fill in `examples/prices.example.json` from each provider's pricing page on the day you run, and record the date with your results. Prices change.
+
+## Running on Kubernetes
+
+A batch job fits well as a Kubernetes Job. Keep the checkpoint on a persistent volume so a rescheduled pod picks up where the last one stopped. See [k8s/job.yaml](k8s/job.yaml).
+
+## Testing
+
+```bash
+pip install -e ".[dev]"
+pytest
+```
+
+The tests use a fake provider that drops lines, returns errors, sends malformed JSON and changes its answers between runs. You can check all the retry and recovery logic without an API key or a bill.
+
+## Status
+
+Early, and moving. The core is tested; the provider adapters for OpenAI and Anthropic follow their documented batch APIs and have unit tests against stand-in clients, and will be checked against the live services as the benchmark runs. Issues and pull requests are welcome.
+
+## Citing
+
+If you use steadybatch or the benchmark results in your work, please cite it (see [CITATION.cff](CITATION.cff)).
+
+## License
+
+Apache-2.0.

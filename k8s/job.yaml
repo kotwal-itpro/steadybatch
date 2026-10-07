@@ -1,0 +1,45 @@
+# Run one benchmark (or one production batch job) as a Kubernetes Job.
+# The checkpoint lives on a persistent volume, so if the pod is evicted or
+# rescheduled, the next pod resumes from where the last one stopped.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: steadybatch-runs
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: steadybatch-openai-run-1
+spec:
+  backoffLimit: 6            # restarts are safe: work is checkpointed
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: bench
+          image: python:3.12-slim
+          command: ["/bin/sh", "-c"]
+          args:
+            - >
+              pip install --quiet "steadybatch[openai]" &&
+              steadybatch-bench run --provider openai --model gpt-4o-mini
+              --data /data/support_tickets.jsonl
+              --schema /data/support_ticket.schema.json
+              --out /runs/openai-1 --poll-every 60
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef: {name: llm-api-keys, key: openai}
+          volumeMounts:
+            - {name: runs, mountPath: /runs}
+            - {name: data, mountPath: /data, readOnly: true}
+      volumes:
+        - name: runs
+          persistentVolumeClaim: {claimName: steadybatch-runs}
+        - name: data
+          configMap: {name: steadybatch-workload}

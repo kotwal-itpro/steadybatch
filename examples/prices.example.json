@@ -1,0 +1,9 @@
+{
+  "_note": "Fill these in from each provider's pricing page on the day you run the benchmark, and write the date in your results. Prices are USD per million tokens at the normal rate; batch_multiplier is the batch discount (0.5 means half price). The zeros below are placeholders, not real prices.",
+  "openai":    {"input_per_mtok": 0.0, "output_per_mtok": 0.0, "batch_multiplier": 0.5},
+  "anthropic": {"input_per_mtok": 0.0, "output_per_mtok": 0.0, "batch_multiplier": 0.5},
+  "gemini":    {"input_per_mtok": 0.0, "output_per_mtok": 0.0, "batch_multiplier": 0.5},
+  "bedrock":   {"input_per_mtok": 0.0, "output_per_mtok": 0.0, "batch_multiplier": 0.5},
+  "vllm":      {"input_per_mtok": 0.0, "output_per_mtok": 0.0, "batch_multiplier": 1.0},
+  "fake":      {"input_per_mtok": 1.0, "output_per_mtok": 2.0, "batch_multiplier": 0.5}
+}

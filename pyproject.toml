@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "steadybatch"
+version = "0.1.0"
+description = "Run millions of LLM requests through batch APIs without silent failures."
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+authors = [{ name = "Ankur Kotwal", email = "kotwal.itpro@gmail.com" }]
+keywords = ["llm", "batch", "inference", "openai", "anthropic", "vllm", "reliability"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: Apache Software License",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = ["jsonschema>=4.0"]
+
+[project.optional-dependencies]
+openai = ["openai>=1.40"]
+anthropic = ["anthropic>=0.40"]
+vllm = ["vllm>=0.6"]
+dev = ["pytest>=8"]
+
+[project.scripts]
+steadybatch-bench = "steadybatch.bench:main"
+
+[project.urls]
+Homepage = "https://github.com/kotwal-itpro/steadybatch"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/steadybatch"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
