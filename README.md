@@ -112,8 +112,11 @@ Useful `run` options for real jobs:
 | gemini-3.5-flash-lite (Gemini) | 1,000 / 1,000 | 0 | 82.1% | 3 min | $0.088 |
 | claude-haiku-5-5, default settings (Anthropic) | 999 / 1,000 | 10 | 89.1% | 10 min | $0.053 |
 | claude-haiku-5-5, thinking disabled (Anthropic) | 1,000 / 1,000 | 0 | 91.0% | 5 min | $0.048 |
+| Qwen2.5-7B-Instruct, self-hosted (vLLM, 1x L4) | 1,000 / 1,000 | 0 | 85.4% | 29 s | $0.004* |
 
-All four got product and issue type 100% right. At 10,000 records, OpenAI and Gemini again returned every line with no retries. What we learned along the way, including our own mistakes, is in [docs/FINDINGS.md](docs/FINDINGS.md). The short version:
+\* GPU time for the run at $0.50/hour on demand. The whole rented-GPU session, including installing vLLM, downloading the model and one-time compilation, cost about $0.05. For vLLM the time is the whole run, since there is no queue.
+
+All five got product and issue type 100% right. At 10,000 records, OpenAI and Gemini again returned every line with no retries. What we learned along the way, including our own mistakes, is in [docs/FINDINGS.md](docs/FINDINGS.md). The short version:
 - A model listed as available can still be refused when the batch is created.
 - Undefined fields look like model errors: one plain sentence per field took follow-up accuracy from 31% to 98-100%.
 - Models fail in different directions under the same instructions, and one setting (Claude's thinking) flipped the direction on the same model.
@@ -140,7 +143,7 @@ The tests use a fake provider that drops lines, returns errors, sends malformed 
 
 ## Status
 
-Early, and moving. The core is tested against a fake provider that misbehaves on purpose. The OpenAI, Gemini and Anthropic adapters have run real jobs of 1,000 to 10,000 records against the live services (100,000 is in progress). The vLLM adapter is unit-tested; its first GPU run is next. Issues and pull requests are welcome.
+Early, and moving. The core is tested against a fake provider that misbehaves on purpose. The OpenAI, Gemini and Anthropic adapters have run real jobs of 1,000 to 10,000 records against the live services (100,000 is in progress). The vLLM adapter has run on a rented NVIDIA L4. Issues and pull requests are welcome.
 
 ## Citing
 

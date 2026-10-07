@@ -1,0 +1,38 @@
+{
+  "provider": "vllm",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "instructions_file": "examples/support_ticket.instructions.txt",
+  "thinking": "model default",
+  "max_tokens": 300,
+  "records": 1000,
+  "ok": 1000,
+  "failed_after_retries": 0,
+  "outcomes": {
+    "ok": 1000,
+    "error": 0,
+    "missing": 0,
+    "invalid": 0
+  },
+  "lines_missing_seen": 0,
+  "lines_errored_seen": 0,
+  "lines_invalid_seen": 0,
+  "batches_submitted": 1,
+  "capacity_refusals": 0,
+  "retried_records": 0,
+  "input_tokens": 403540,
+  "output_tokens": 29504,
+  "wall_seconds": 29.0,
+  "batch_seconds_median": 3.4,
+  "batch_seconds_max": 3.4,
+  "field_accuracy": {
+    "product": 1.0,
+    "issue_type": 1.0,
+    "sentiment": 0.854,
+    "needs_follow_up": 0.993
+  },
+  "hardware": "1x NVIDIA L4 24 GB (RunPod on-demand, driver 580.126.20), vLLM installed from PyPI 2026-10-07",
+  "gpu_hourly_usd": 0.5,
+  "cost_usd": 0.004,
+  "cost_per_1000_records_usd": 0.004,
+  "cost_note": "GPU time for the run itself (wall_seconds) at the on-demand price. The whole pod session, including installing vLLM, downloading the model and one-time compilation (~8 min), was billed about $0.05 in total."
+}

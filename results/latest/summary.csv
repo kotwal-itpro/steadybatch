@@ -10,3 +10,4 @@ Run,Provider,Model,Records,OK,Failed,Missing,Errored,Invalid,Retried,Median batc
 2026-10-07-openai-gpt-4.1-mini-100-v2,openai,gpt-4.1-mini,100,100,0,0,0,0,0,91.7,91.7,0.0848,0.985
 2026-10-07-openai-gpt-4.1-mini-1000-r1,openai,gpt-4.1-mini,1000,1000,0,0,0,0,0,242.4,242.4,0.085,0.9772
 2026-10-07-openai-gpt-4.1-mini-10000-r1,openai,gpt-4.1-mini,10000,10000,0,0,0,0,0,1093.1,1093.1,0.085,0.9773
+2026-10-07-vllm-qwen2.5-7b-instruct-1000-r1,vllm,Qwen/Qwen2.5-7B-Instruct,1000,1000,0,0,0,0,0,3.4,3.4,0.004,0.9617
