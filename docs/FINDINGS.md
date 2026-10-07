@@ -75,3 +75,30 @@ Claude run.
 constrains replies with structured outputs (`output_config.format`), matching the schema
 modes we use on OpenAI and Gemini. A refusal is now counted as a failed line rather than
 an empty answer. The package requires `anthropic>=1.0`.
+
+## 6. A small model that decides when to think can run out of room (Anthropic, 2026-10-07)
+
+**What happened.** The first 1,000-record run on `claude-haiku-5-5` used the model's
+default settings, with the same `max_tokens` of 300 as every other run. Haiku 5.5 uses
+adaptive thinking by default: it decides per request whether to think first. It thought on
+91 of 1,000 requests, and on 10 of those the thinking used the whole 300-token budget
+before the JSON was finished (`stop_reason: max_tokens`). Six came back with no text at all,
+four with JSON cut off mid-string. Retries recovered nine; one failed all three attempts,
+so the run finished with 999 of 1,000. It was the first record any provider in this study
+failed to deliver.
+
+**Why it matters.** Nothing in the request asked for reasoning, and 300 tokens is about
+eight times what an answer needs (the median reply was 40 tokens). The same budget that
+is plenty for gpt-4.1-mini is not a safe budget for a model whose default is to think
+sometimes. The failures were also uneven: they landed on a few records the model found
+harder, so a retry with the same budget did not always help.
+
+**How we noticed, and a bug it exposed.** steadybatch caught every one and retried it,
+but labelled them "empty response" or "not valid JSON". The adapter knew the reason
+(`max_tokens`); the runner dropped it when validation failed. The runner now keeps the
+provider's note, so these show up as `truncated (max_tokens): not valid JSON ...`.
+
+**What we changed.** The Anthropic adapter and `steadybatch-bench run` take
+`--thinking disabled|adaptive`, and each run's summary records the thinking setting and
+`max_tokens`. We keep the default-settings run as published and add a thinking-disabled
+run for the like-for-like comparison with gpt-4.1-mini.

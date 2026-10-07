@@ -1,0 +1,33 @@
+{
+  "provider": "anthropic",
+  "model": "claude-haiku-5-5",
+  "instructions_file": "examples/support_ticket.instructions.txt",
+  "records": 100,
+  "ok": 100,
+  "failed_after_retries": 0,
+  "outcomes": {
+    "ok": 100,
+    "error": 0,
+    "missing": 0,
+    "invalid": 0
+  },
+  "lines_missing_seen": 0,
+  "lines_errored_seen": 0,
+  "lines_invalid_seen": 0,
+  "batches_submitted": 1,
+  "retried_records": 0,
+  "input_tokens": 76018,
+  "output_tokens": 4755,
+  "wall_seconds": 457.8,
+  "batch_seconds_median": 457.0,
+  "batch_seconds_max": 457.0,
+  "field_accuracy": {
+    "product": 1.0,
+    "issue_type": 1.0,
+    "sentiment": 0.95,
+    "needs_follow_up": 1.0
+  },
+  "cost_usd": 0.005,
+  "cost_per_1000_records_usd": 0.0499,
+  "cost_note": "added after the run from results/prices-2026-10-07.json"
+}

@@ -146,7 +146,9 @@ class Runner:
             data = check(raw.text, self.schema)
         except InvalidOutput as exc:
             report.lines_invalid += 1
+            # Keep the provider's note (e.g. "truncated (max_tokens)"): it says why the text is bad.
+            error = f"{raw.error}: {exc}" if raw.error else str(exc)
             self.store.record(raw.custom_id, Outcome.INVALID, retryable=True,
-                              text=raw.text, error=str(exc), **tokens)
+                              text=raw.text, error=error, **tokens)
             return
         self.store.record(raw.custom_id, Outcome.OK, retryable=False, data=data, text=raw.text, **tokens)

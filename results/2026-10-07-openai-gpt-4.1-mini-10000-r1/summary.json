@@ -1,0 +1,33 @@
+{
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "instructions_file": "examples/support_ticket.instructions.txt",
+  "records": 10000,
+  "ok": 10000,
+  "failed_after_retries": 0,
+  "outcomes": {
+    "ok": 10000,
+    "error": 0,
+    "missing": 0,
+    "invalid": 0
+  },
+  "lines_missing_seen": 0,
+  "lines_errored_seen": 0,
+  "lines_invalid_seen": 0,
+  "batches_submitted": 1,
+  "retried_records": 0,
+  "input_tokens": 3363621,
+  "output_tokens": 221565,
+  "wall_seconds": 1138.8,
+  "batch_seconds_median": 1093.1,
+  "batch_seconds_max": 1093.1,
+  "field_accuracy": {
+    "product": 1.0,
+    "issue_type": 1.0,
+    "sentiment": 0.9257,
+    "needs_follow_up": 0.9834
+  },
+  "cost_usd": 0.85,
+  "cost_per_1000_records_usd": 0.085,
+  "cost_note": "added after the run from results/prices-2026-10-07.json"
+}

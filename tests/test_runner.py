@@ -88,3 +88,16 @@ def test_duplicate_lines_from_the_provider_count_once():
     report = runner(Doubling()).run(requests(5))
     assert report.ok == 5
     assert all(r.input_tokens == 100 for r in report.results)
+
+
+def test_truncated_output_keeps_the_reason_in_history():
+    from steadybatch.models import RawResult
+
+    class Truncating(FakeProvider):
+        def results(self, batch_id):
+            for raw in super().results(batch_id):
+                yield RawResult(raw.custom_id, ok=True, text='{"key": "re', error="truncated (max_tokens)")
+
+    report = runner(Truncating(), max_attempts=1).run(requests(2))
+    assert all(r.outcome is Outcome.INVALID for r in report.results)
+    assert all(r.history[0].startswith("invalid: truncated (max_tokens): not valid JSON") for r in report.results)

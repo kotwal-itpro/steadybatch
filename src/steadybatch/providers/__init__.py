@@ -6,7 +6,7 @@ from .base import BatchProvider
 from .fake import FakeProvider, demo_answer
 
 
-def get_provider(name: str, model: str | None = None) -> BatchProvider:
+def get_provider(name: str, model: str | None = None, *, thinking: str | None = None) -> BatchProvider:
     if name == "fake":
         # Misbehaves like a real API: a few lines dropped, errored or malformed.
         return FakeProvider(answer=demo_answer, drop_rate=0.01, error_rate=0.01, invalid_rate=0.01,
@@ -16,7 +16,7 @@ def get_provider(name: str, model: str | None = None) -> BatchProvider:
         return OpenAIBatch()
     if name == "anthropic":
         from .anthropic_batch import AnthropicBatch
-        return AnthropicBatch()
+        return AnthropicBatch(thinking=thinking)
     if name == "vllm":
         from .vllm_offline import VLLMOffline
         if not model:

@@ -70,7 +70,7 @@ def cmd_run(args: argparse.Namespace) -> int:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
 
-    runner = Runner(get_provider(args.provider, args.model), args.model, response_schema=schema,
+    runner = Runner(get_provider(args.provider, args.model, thinking=args.thinking), args.model, response_schema=schema,
                     checkpoint=out / "checkpoint.sqlite", max_attempts=args.max_attempts,
                     poll_every=args.poll_every)
     instructions = Path(args.instructions).read_text() if args.instructions else ""
@@ -87,6 +87,8 @@ def cmd_run(args: argparse.Namespace) -> int:
         "provider": args.provider,
         "model": args.model,
         "instructions_file": args.instructions,
+        "thinking": args.thinking or "model default",
+        "max_tokens": args.max_tokens,
         "records": len(records),
         "ok": report.ok,
         "failed_after_retries": report.failed,
@@ -276,6 +278,8 @@ def main(argv: list[str] | None = None) -> int:
     run.add_argument("--limit", type=int)
     run.add_argument("--max-tokens", type=int, default=512)
     run.add_argument("--max-attempts", type=int, default=3)
+    run.add_argument("--thinking", choices=["disabled", "adaptive"],
+                     help="Anthropic only: set thinking explicitly instead of using the model default")
     run.add_argument("--poll-every", type=float, default=60.0)
     run.add_argument("--prices", help="JSON file with per-provider token prices")
     run.set_defaults(func=cmd_run)

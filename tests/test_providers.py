@@ -78,6 +78,12 @@ def test_anthropic_line_uses_structured_output_format():
     assert params["system"] == "be brief" and "temperature" not in params
 
 
+def test_anthropic_sends_thinking_only_when_set():
+    assert "thinking" not in AnthropicBatch(client=object()).to_line(prepared())["params"]
+    params = AnthropicBatch(client=object(), thinking="disabled").to_line(prepared())["params"]
+    assert params["thinking"] == {"type": "disabled"}
+
+
 def test_anthropic_can_fall_back_to_schema_in_system_prompt():
     params = AnthropicBatch(client=object(), native_schema=False).to_line(prepared())["params"]
     assert "output_config" not in params

@@ -2,8 +2,25 @@
   "_note": "USD per 1M tokens, taken 2026-10-07 from the official pricing pages. batch_multiplier is applied to the listed prices to get batch cost.",
   "_sources": {
     "openai": "https://developers.openai.com/api/docs/models/gpt-4.1-mini (standard prices; Batch API is 50% of standard)",
-    "gemini": "https://ai.google.dev/gemini-api/docs/pricing (Batch tier prices listed directly; output includes thinking tokens)"
+    "gemini": "https://ai.google.dev/gemini-api/docs/pricing (Batch tier prices listed directly; output includes thinking tokens)",
+    "anthropic": "https://platform.claude.com/docs/en/about-claude/pricing (Batch processing table lists batch prices directly; Claude Haiku 5.5 rate for prompts up to 100,000 tokens, which covers every request here)"
   },
-  "openai": {"model": "gpt-4.1-mini", "input_per_mtok": 0.40, "output_per_mtok": 1.60, "batch_multiplier": 0.5},
-  "gemini": {"model": "gemini-3.5-flash-lite", "input_per_mtok": 0.15, "output_per_mtok": 1.25, "batch_multiplier": 1.0}
+  "openai": {
+    "model": "gpt-4.1-mini",
+    "input_per_mtok": 0.4,
+    "output_per_mtok": 1.6,
+    "batch_multiplier": 0.5
+  },
+  "gemini": {
+    "model": "gemini-3.5-flash-lite",
+    "input_per_mtok": 0.15,
+    "output_per_mtok": 1.25,
+    "batch_multiplier": 1.0
+  },
+  "anthropic": {
+    "model": "claude-haiku-5-5",
+    "input_per_mtok": 0.05,
+    "output_per_mtok": 0.25,
+    "batch_multiplier": 1.0
+  }
 }

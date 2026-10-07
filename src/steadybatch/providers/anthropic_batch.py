@@ -7,7 +7,10 @@ succeeded, errored, canceled or expired.
 When a JSON Schema is given, it is sent as a structured output format
 (`output_config.format`), so the reply is constrained to the schema, the
 same as the OpenAI and Gemini adapters. Pass `native_schema=False` to
-describe the schema in the system prompt instead. `temperature` is not sent:
+describe the schema in the system prompt instead. `thinking` ("disabled" or
+"adaptive") is sent when given; left out, the model uses its default, and on
+Claude Haiku 5.5 that default is adaptive thinking, which counts against
+max_tokens. `temperature` is not sent:
 current Claude models reject non-default sampling settings, and anthropic
 SDK 1.x no longer takes the parameter.
 """
@@ -26,12 +29,13 @@ class AnthropicBatch(BatchProvider):
     max_requests_per_batch = 100_000
     max_bytes_per_batch = 256 * 1024 * 1024
 
-    def __init__(self, client=None, *, native_schema: bool = True):
+    def __init__(self, client=None, *, native_schema: bool = True, thinking: str | None = None):
         if client is None:
             import anthropic  # imported here so the package works without it
             client = anthropic.Anthropic()
         self.client = client
         self.native_schema = native_schema
+        self.thinking = thinking
 
     def to_line(self, req: PreparedRequest) -> dict:
         params = {
@@ -39,6 +43,8 @@ class AnthropicBatch(BatchProvider):
             "max_tokens": req.request.max_tokens,
             "messages": req.request.messages,
         }
+        if self.thinking:
+            params["thinking"] = {"type": self.thinking}
         system = req.request.system or ""
         if req.response_schema is not None and self.native_schema:
             params["output_config"] = {"format": {"type": "json_schema", "schema": req.response_schema}}
