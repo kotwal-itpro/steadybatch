@@ -118,3 +118,11 @@ def test_batch_size_and_max_open_batches_limit_queued_work():
     assert report.ok == 10 and report.batches_submitted == 3
     assert [len(b) for b in provider.submitted_batches] == [4, 4, 2]
     assert open_counts == [0, 0, 0], "each batch should be collected before the next is sent"
+
+
+def test_default_clock_is_wall_time():
+    # time.monotonic stops counting while a Mac sleeps, which under-reported a
+    # multi-hour batch's wall time and would stretch the 26-hour timeout.
+    import time
+    from steadybatch.runner import Runner
+    assert Runner(FakeProvider(), "m").clock is time.time

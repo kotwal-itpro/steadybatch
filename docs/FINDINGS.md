@@ -142,3 +142,21 @@ any of their retries, and each run's summary counts `capacity_refusals`. It give
 only if a single-request batch is refused. This is tested against a fake provider
 with a limited queue in both styles; it has not yet met a real full queue, since our
 live runs now use batch sizes that fit.
+
+## 8. Our clock stopped while the laptop slept (our bug, 2026-10-07)
+
+**What happened.** The 100,000-record Claude run reported a batch time of 9,834 seconds and a
+total run time of 4,136 seconds, which can't both be true. The batch time was right: the batch
+really took 2 hours 44 minutes. The run time was wrong because the runner measured it with
+`time.monotonic()`, which on macOS stops counting while the machine sleeps, and the laptop slept
+for long stretches during the wait. The same clock drove the runner's 26-hour timeout, which
+would also have stretched.
+
+**Why it matters.** Batch jobs spend hours waiting, often on a laptop or a VM that can be
+suspended. Any duration or deadline measured with a clock that pauses during sleep will be
+short, and a timeout based on it will fire late.
+
+**What we changed.** The runner now uses wall-clock time by default. The affected run's
+summary keeps the recorded value and the corrected one (from log timestamps), with a note.
+The 10,000-record and Gemini 100,000-record runs were not affected: their run times match
+their logs.

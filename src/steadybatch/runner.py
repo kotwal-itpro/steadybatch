@@ -64,7 +64,7 @@ class Runner:
         batch_size: int | None = None,
         max_open_batches: int | None = None,
         sleep: Callable[[float], None] = time.sleep,
-        clock: Callable[[], float] = time.monotonic,
+        clock: Callable[[], float] = time.time,  # wall clock: monotonic stops while a laptop sleeps
     ):
         self.provider = provider
         self.model = model
