@@ -99,6 +99,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         "lines_invalid_seen": report.lines_invalid,
         "batches_submitted": report.batches_submitted,
         "capacity_refusals": report.capacity_refusals,
+        "submit_retries": report.submit_retries,
         "retried_records": sum(r.attempts > 1 for r in report.results),
         "input_tokens": in_tok,
         "output_tokens": out_tok,

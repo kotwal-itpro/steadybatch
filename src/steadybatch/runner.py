@@ -10,6 +10,8 @@ The rules it follows:
 * State is saved after every step, so a restart picks up where it stopped.
 * A provider that refuses a batch because the queue is full gets smaller
   batches, without using up any request's retries.
+* A dropped connection or server error while submitting is retried with a
+  growing pause, instead of stopping a job that may have run for hours.
 """
 
 from __future__ import annotations
@@ -38,6 +40,7 @@ class RunReport:
     lines_errored: int = 0
     lines_invalid: int = 0
     capacity_refusals: int = 0
+    submit_retries: int = 0
     seconds: float = 0.0
     batch_seconds: list[float] = field(default_factory=list)
 
@@ -63,6 +66,7 @@ class Runner:
         timeout: float = 26 * 3600,
         batch_size: int | None = None,
         max_open_batches: int | None = None,
+        max_submit_retries: int = 8,
         sleep: Callable[[float], None] = time.sleep,
         clock: Callable[[], float] = time.time,  # wall clock: monotonic stops while a laptop sleeps
     ):
@@ -74,6 +78,7 @@ class Runner:
         # input tokens). Smaller batches, fewer at a time, keep a big job under that cap.
         self.batch_size = batch_size
         self.max_open_batches = max_open_batches
+        self.max_submit_retries = max_submit_retries
         self._size_limit: int | None = None  # lowered when the provider says the queue is full
         self.max_attempts = max_attempts
         self.poll_every = poll_every
@@ -100,6 +105,7 @@ class Runner:
             todo = self.store.ready_to_submit(self.max_attempts)
             if not todo:
                 break
+            failures = 0
             while todo:
                 batch = next(chunk(todo, self._max_count(), self.provider.max_bytes_per_batch,
                                    self.provider.size_of))
@@ -108,11 +114,20 @@ class Runner:
                 try:
                     batch_id = self.provider.submit(batch)
                 except Exception as exc:
-                    if not self.provider.is_over_capacity(exc):
-                        raise
-                    report.capacity_refusals += 1
-                    self._on_capacity_refusal(len(batch), report, started, reason=str(exc)[:200])
-                    continue
+                    if self.provider.is_over_capacity(exc):
+                        report.capacity_refusals += 1
+                        self._on_capacity_refusal(len(batch), report, started, reason=str(exc)[:200])
+                        continue
+                    if self.provider.is_transient(exc) and failures < self.max_submit_retries:
+                        failures += 1
+                        report.submit_retries += 1
+                        pause = min(30.0 * 2 ** (failures - 1), 600.0)
+                        log.warning("submit failed (%s: %s); retry %d of %d in %.0f s", type(exc).__name__,
+                                    str(exc)[:200], failures, self.max_submit_retries, pause)
+                        self.sleep(pause)
+                        continue
+                    raise
+                failures = 0
                 self.store.mark_submitted(batch_id, self.provider.name, [r.custom_id for r in batch])
                 report.batches_submitted += 1
                 log.info("submitted %s with %d requests", batch_id, len(batch))

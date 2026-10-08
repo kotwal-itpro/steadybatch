@@ -36,6 +36,17 @@ class BatchProvider(ABC):
         """
         return False
 
+    def is_transient(self, exc: Exception) -> bool:
+        """True if `submit` failed for a reason worth retrying as-is: a dropped
+        connection, a timeout or a server error. The SDKs retry a couple of times
+        on their own; a long job needs more patience than that."""
+        names = {c.__name__ for c in type(exc).__mro__}
+        if names & {"APIConnectionError", "APITimeoutError", "ConnectionError", "TimeoutError",
+                    "ServerError", "InternalServerError", "ServiceUnavailableError"}:
+            return True
+        status = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+        return isinstance(status, int) and status >= 500
+
     @abstractmethod
     def submit(self, batch: list[PreparedRequest]) -> str:
         """Send a batch. Return the provider's batch ID."""

@@ -84,3 +84,36 @@ def test_other_errors_still_stop_the_run():
 def test_gives_up_when_even_one_request_is_refused():
     with pytest.raises(RuntimeError, match="one-request batch"):
         runner(LimitedQueue(capacity=0)).run(requests(3))
+
+
+class APIConnectionError(Exception):
+    """Stands in for openai.APIConnectionError and friends (matched by class name)."""
+
+
+def test_dropped_connection_at_submit_is_retried():
+    class Flaky(FakeProvider):
+        fails = 2
+
+        def submit(self, batch):
+            if self.fails:
+                self.fails -= 1
+                raise APIConnectionError("Connection error.")
+            return super().submit(batch)
+
+    pauses = []
+    from steadybatch.runner import Runner
+    from test_runner import SCHEMA
+    r = Runner(Flaky(), "m", response_schema=SCHEMA, sleep=pauses.append, max_attempts=1)
+    report = r.run(requests(5))
+    assert report.ok == 5 and report.submit_retries == 2
+    assert pauses[:2] == [30.0, 60.0]
+    assert all(res.attempts == 1 for res in report.results)
+
+
+def test_gives_up_after_max_submit_retries():
+    class Down(FakeProvider):
+        def submit(self, batch):
+            raise APIConnectionError("Connection error.")
+
+    with pytest.raises(APIConnectionError):
+        runner(Down(), max_submit_retries=3).run(requests(2))
