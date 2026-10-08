@@ -19,6 +19,9 @@ Counts of missing, errored and invalid lines are before retries; OK and Failed a
 | 2026-10-07-openai-gpt-4.1-mini-10000-r1 | openai | gpt-4.1-mini | 10000 | 10000 | 0 | 0 | 0 | 0 | 0 | 1093.1 | 1093.1 | 0.085 | 0.9773 |
 | 2026-10-07-openai-gpt-4.1-mini-100000-r1 | openai | gpt-4.1-mini | 100000 | 100000 | 0 | 0 | 0 | 0 | 0 | 3095.6 | 5052.3 | 0.085 | 0.9761 |
 | 2026-10-07-vllm-qwen2.5-7b-instruct-1000-r1 | vllm | Qwen/Qwen2.5-7B-Instruct | 1000 | 1000 | 0 | 0 | 0 | 0 | 0 | 3.4 | 3.4 | 0.004 | 0.9617 |
+| 2026-10-08-anthropic-claude-haiku-5-5-nothink-1000-r2 | anthropic | claude-haiku-5-5 | 1000 | 1000 | 0 | 0 | 0 | 0 | 0 | 486.0 | 486.0 | 0.0481 | 0.9763 |
+| 2026-10-08-gemini-gemini-3.5-flash-lite-1000-r2 | gemini | gemini-3.5-flash-lite | 1000 | 1000 | 0 | 0 | 0 | 0 | 0 | 365.4 | 365.4 | 0.0882 | 0.953 |
+| 2026-10-08-openai-gpt-4.1-mini-1000-r2 | openai | gpt-4.1-mini | 1000 | 1000 | 0 | 0 | 0 | 0 | 0 | 364.0 | 364.0 | 0.085 | 0.9772 |
 
 ![problems.png](problems.png)
 ![cost.png](cost.png)

@@ -1,0 +1,10 @@
+{
+  "records_in_both": 1000,
+  "exact_match_rate": 0.971,
+  "field_match_rate": {
+    "issue_type": 1.0,
+    "needs_follow_up": 1.0,
+    "product": 1.0,
+    "sentiment": 0.971
+  }
+}
