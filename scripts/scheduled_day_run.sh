@@ -20,7 +20,9 @@ echo "== $(date) starting day run $R"
 run() {  # provider model [name-suffix] [extra bench args...]
   local provider=$1 model=$2 suffix=${3:-}
   shift $(( $# < 3 ? $# : 3 ))
-  local out="runs/$D-$provider-$model$suffix-1000-$R"
+  local name="$provider-$model"
+  [[ "$model" == "$provider"-* ]] && name="$model"   # gemini + gemini-3.5-... -> gemini-3.5-...
+  local out="runs/$D-$name$suffix-1000-$R"
   [ -f "$out/summary.json" ] && { echo "$out already done"; return 0; }
   .venv/bin/steadybatch-bench run --provider "$provider" --model "$model" "$@" \
     --data examples/support_tickets.jsonl --schema examples/support_ticket.schema.json \
