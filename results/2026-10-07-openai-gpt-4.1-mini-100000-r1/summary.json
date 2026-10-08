@@ -1,0 +1,38 @@
+{
+  "provider": "openai",
+  "model": "gpt-4.1-mini",
+  "instructions_file": "examples/support_ticket.instructions.txt",
+  "thinking": "model default",
+  "max_tokens": 300,
+  "records": 100000,
+  "ok": 100000,
+  "failed_after_retries": 0,
+  "outcomes": {
+    "ok": 100000,
+    "error": 0,
+    "missing": 0,
+    "invalid": 0
+  },
+  "lines_missing_seen": 0,
+  "lines_errored_seen": 0,
+  "lines_invalid_seen": 0,
+  "batches_submitted": 10,
+  "capacity_refusals": 0,
+  "retried_records": 0,
+  "input_tokens": 33629370,
+  "output_tokens": 2215803,
+  "wall_seconds": 36951.6,
+  "batch_seconds_median": 3095.6,
+  "batch_seconds_max": 5052.3,
+  "cost_usd": 8.4985,
+  "cost_per_1000_records_usd": 0.085,
+  "field_accuracy": {
+    "product": 1.0,
+    "issue_type": 1.0,
+    "sentiment": 0.9214,
+    "needs_follow_up": 0.9831
+  },
+  "wall_seconds_this_process": 7616.2,
+  "batch_seconds_min": 851.7,
+  "run_note": "Run in two parts. The first process completed 8 of 10 batches (80,000 records), then stopped at 20:35 when uploading batch 9 failed with a dropped connection (broken pipe) after the SDK's own retries. It was resumed from the checkpoint at 20:48 ('registered 0 new requests'); the second process sent only the remaining 20,000 records. Nothing was resubmitted or billed twice (FINDINGS #9). wall_seconds is first start to last result, from log and file timestamps; the laptop slept during parts of the first process."
+}

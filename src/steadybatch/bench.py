@@ -123,7 +123,13 @@ def cmd_run(args: argparse.Namespace) -> int:
 
 def cmd_compare(args: argparse.Namespace) -> int:
     def load(d: str) -> dict[str, Any]:
-        rows = [json.loads(l) for l in (Path(d) / "results.jsonl").read_text().splitlines() if l]
+        path = Path(d) / "results.jsonl"
+        if not path.exists() and path.with_suffix(".jsonl.gz").exists():
+            import gzip  # large published runs are stored compressed
+            text = gzip.decompress(path.with_suffix(".jsonl.gz").read_bytes()).decode("utf-8")
+        else:
+            text = path.read_text()
+        rows = [json.loads(l) for l in text.splitlines() if l]
         return {r["key"]: r["data"] for r in rows if r["outcome"] == "ok"}
 
     a, b = load(args.run_a), load(args.run_b)

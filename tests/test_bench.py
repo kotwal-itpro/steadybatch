@@ -65,3 +65,13 @@ def test_report_adds_cost_from_a_price_file(tmp_path):
     assert bench.main(["report", str(a), "--out", str(out), "--no-charts", "--prices", str(prices)]) == 0
     expected = round((summary["input_tokens"] * 1.0 + summary["output_tokens"] * 2.0) / 1e6 * 0.5 / 60 * 1000, 4)
     assert str(expected) in (out / "summary.md").read_text()
+
+
+def test_compare_reads_compressed_results(tmp_path, capsys):
+    import gzip
+    a, b = run_fake(tmp_path, "run1"), run_fake(tmp_path, "run2")
+    (b / "results.jsonl.gz").write_bytes(gzip.compress((b / "results.jsonl").read_bytes()))
+    (b / "results.jsonl").unlink()
+    capsys.readouterr()
+    assert bench.main(["compare", str(a), str(b)]) == 0
+    assert json.loads(capsys.readouterr().out)["records_in_both"] == 60

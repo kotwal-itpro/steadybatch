@@ -160,3 +160,50 @@ short, and a timeout based on it will fire late.
 summary keeps the recorded value and the corrected one (from log timestamps), with a note.
 The 10,000-record and Gemini 100,000-record runs were not affected: their run times match
 their logs.
+
+## 9. At 100,000 records, nothing went missing; time and the network were the problems (all three, 2026-10-07)
+
+**What happened.** All three providers returned 100,000 of 100,000 records, with no missing,
+errored or invalid lines and no retries. Accuracy matched their 1,000-record runs. What changed
+with scale was time, and our own network:
+
+- Gemini ran ten 10,000-record batches at about 4 minutes each (45 minutes in total).
+- Claude ran all 100,000 as one batch, which took 2 hours 44 minutes (about 5 minutes at 1,000).
+- OpenAI's ten batches slowed through the day, from 14 minutes at 12:41 to between 50 and 84
+  minutes in the evening, so the same batch took up to six times longer depending on when it ran.
+- Uploading OpenAI's ninth batch failed with a dropped connection (`Broken pipe`) after the SDK's
+  own retries, and the run stopped after eight batches and about eight hours.
+
+**What steadybatch did.** The checkpoint had 80,000 records done and 20,000 pending, with no
+batch left open. Running the same command again registered no new requests, sent only the
+remaining 20,000, and finished without resubmitting or paying for anything twice.
+
+**What we changed.** Submit errors that look temporary (dropped connections, timeouts, 5xx)
+are now retried with a pause of 30 seconds doubling up to 10 minutes, up to 8 times, before the
+run stops. Run summaries count `submit_retries`. For planning: batch turnaround depends on the
+provider's load at the time, not just the job size, so budget for the worst batch, not the
+first one.
+
+## 10. The same records, sent again, don't always get the same answer (early look, 2026-10-07)
+
+**What happened.** Each larger dataset starts with the records of the smaller one, so the
+1,000, 10,000 and 100,000-record runs (sent hours apart on the same day) overlap. Comparing
+answers on the shared records:
+
+| Provider | Setting | Overlap compared | Same answer, all fields | Same sentiment |
+|---|---|---|---|---|
+| gpt-4.1-mini | temperature 0 | 1k vs 10k; 10k vs 100k | 99.4%; 99.3% | 99.6%; 99.7% |
+| claude-haiku-5-5, thinking off | temperature not settable | 1k vs 100k | 97.1% | 97.1% |
+| gemini-3.5-flash-lite | temperature 0 | 1k vs 10k; 10k vs 100k | 94.5%; 93.5% | 95.0%; 93.7% |
+
+Product and issue type never changed. Almost all the movement is on sentiment, the one field
+the models also get wrong most often.
+
+**Why it matters.** Temperature 0 does not mean the same answer every time. On Gemini, about
+one record in sixteen changed between two runs of the same request on the same day. A
+pipeline that reprocesses data, or compares this week's numbers with last week's, will see
+some change that comes from the model, not the data.
+
+**Next.** The scheduled day 2 and day 3 runs (same 1,000 records, all three providers) measure
+this properly across days. This early look comes from runs of different sizes, so batch
+composition differed between the runs being compared.

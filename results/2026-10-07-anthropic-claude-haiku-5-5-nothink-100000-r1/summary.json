@@ -1,0 +1,36 @@
+{
+  "provider": "anthropic",
+  "model": "claude-haiku-5-5",
+  "instructions_file": "examples/support_ticket.instructions.txt",
+  "thinking": "disabled",
+  "max_tokens": 300,
+  "records": 100000,
+  "ok": 100000,
+  "failed_after_retries": 0,
+  "outcomes": {
+    "ok": 100000,
+    "error": 0,
+    "missing": 0,
+    "invalid": 0
+  },
+  "lines_missing_seen": 0,
+  "lines_errored_seen": 0,
+  "lines_invalid_seen": 0,
+  "batches_submitted": 1,
+  "retried_records": 0,
+  "input_tokens": 76085768,
+  "output_tokens": 4046128,
+  "wall_seconds": 10282.0,
+  "batch_seconds_median": 9834.1,
+  "batch_seconds_max": 9834.1,
+  "cost_usd": 4.8158,
+  "cost_per_1000_records_usd": 0.0482,
+  "field_accuracy": {
+    "product": 1.0,
+    "issue_type": 1.0,
+    "sentiment": 0.9069,
+    "needs_follow_up": 1.0
+  },
+  "wall_seconds_recorded": 4135.5,
+  "wall_seconds_note": "Corrected from the log and file timestamps. The runner's monotonic clock stopped while the laptop slept, so it recorded 4135.5 s (FINDINGS #8). batch_seconds uses wall-clock time and is correct."
+}
