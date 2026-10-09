@@ -13,6 +13,9 @@ identifiers:
     value: "10.5281/zenodo.23221956"
     description: "All versions (concept DOI)"
   - type: doi
+    value: "10.5281/zenodo.23256903"
+    description: "v0.2.1"
+  - type: doi
     value: "10.5281/zenodo.23231614"
     description: "v0.2.0"
   - type: doi
