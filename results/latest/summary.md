@@ -22,6 +22,9 @@ Counts of missing, errored and invalid lines are before retries; OK and Failed a
 | 2026-10-08-anthropic-claude-haiku-5-5-nothink-1000-r2 | anthropic | claude-haiku-5-5 | 1000 | 1000 | 0 | 0 | 0 | 0 | 0 | 486.0 | 486.0 | 0.0481 | 0.9763 |
 | 2026-10-08-gemini-3.5-flash-lite-1000-r2 | gemini | gemini-3.5-flash-lite | 1000 | 1000 | 0 | 0 | 0 | 0 | 0 | 365.4 | 365.4 | 0.0882 | 0.953 |
 | 2026-10-08-openai-gpt-4.1-mini-1000-r2 | openai | gpt-4.1-mini | 1000 | 1000 | 0 | 0 | 0 | 0 | 0 | 364.0 | 364.0 | 0.085 | 0.9772 |
+| 2026-10-09-anthropic-claude-haiku-5-5-nothink-1000-r3 | anthropic | claude-haiku-5-5 | 1000 | 1000 | 0 | 0 | 0 | 0 | 0 | 1332.3 | 1332.3 | 0.0481 | 0.9768 |
+| 2026-10-09-gemini-3.5-flash-lite-1000-r3 | gemini | gemini-3.5-flash-lite | 1000 | 1000 | 0 | 0 | 0 | 0 | 0 | 183.0 | 183.0 | 0.0883 | 0.9523 |
+| 2026-10-09-openai-gpt-4.1-mini-1000-r3 | openai | gpt-4.1-mini | 1000 | 1000 | 0 | 0 | 0 | 0 | 0 | 243.8 | 243.8 | 0.085 | 0.977 |
 
 ![problems.png](problems.png)
 ![cost.png](cost.png)
