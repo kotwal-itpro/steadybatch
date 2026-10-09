@@ -67,7 +67,7 @@ Don't trust a batch that says "completed". steadybatch gives every record a stab
 
 ## 8. Before switching models, compare the mistakes
 
-Two models with similar scores can be wrong about different records. In our runs, OpenAI and the self-hosted Qwen model read polite complaints as negative, Gemini read real frustration as neutral, and one Claude setting flipped which way it erred. If something downstream counts the answers (unhappy customers per week, say), a model switch moves the count even when accuracy looks the same.
+Two models with similar scores can be wrong about different records. In our runs, OpenAI and the self-hosted Qwen model read polite complaints as negative, Gemini read real frustration as neutral, and one Claude setting moved it from balanced mistakes to mostly harsh ones. If something downstream counts the answers (unhappy customers per week, say), a model switch moves the count even when accuracy looks the same.
 
 ```bash
 steadybatch-bench compare runs/model-a runs/model-b   # agreement, field by field

@@ -106,11 +106,17 @@ run for the like-for-like comparison with gpt-4.1-mini.
 **The thinking-disabled run.** Same 1,000 records, same 300-token budget, with
 `--thinking disabled`: 1,000 of 1,000 on the first attempt, no retries, median batch
 time 304 s instead of 606 s, and $0.048 per 1,000 records instead of $0.053. Sentiment
-accuracy was about the same (91.0% vs 89.1%), but the mistakes changed direction. With
-default settings the most common miss was negative → neutral (50), the way Gemini errs;
-with thinking off it was neutral → negative (54), the way gpt-4.1-mini errs. The two
-Claude runs agreed on sentiment for 88.7% of records. One setting on the same model moved
-which records were wrong, not only how many.
+accuracy was about the same (91.0% vs 89.1%), but the balance of the mistakes changed.
+Counting every miss by direction (a miss is "harsher" when the answer is more negative than
+the label), default settings gave 59 harsher and 50 more lenient misses, roughly balanced,
+though the single most common miss was negative → neutral (50), the way Gemini errs. With
+thinking off it was 81 harsher and 9 more lenient, strongly one-sided, the way gpt-4.1-mini
+errs. The two Claude runs agreed on sentiment for 88.7% of records. One setting on the same
+model moved which records were wrong, not only how many.
+
+*Correction (2026-10-09):* an earlier version of this entry, and our first blog post, said
+the mistakes "changed direction". Counted by direction, the default run is balanced rather
+than lenient, so "went from balanced to one-sided" is the accurate description.
 
 ## 7. A big job needs to respect the queue limit, and the error doesn't say so (Gemini, 2026-10-07)
 

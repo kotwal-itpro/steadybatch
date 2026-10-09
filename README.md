@@ -121,7 +121,7 @@ Useful `run` options for real jobs:
 All five got product and issue type 100% right. At 10,000 records, OpenAI and Gemini again returned every line with no retries. **At 100,000 records, all three hosted providers returned 100,000 of 100,000 with no retries**, at the same accuracy; what changed was turnaround (Gemini 45 minutes in 10 batches, Claude 2 h 44 min as one batch, OpenAI's batches slowing from 14 to 84 minutes through the day). Sending the same records again changed 0.7% of OpenAI's answers, 3% of Claude's and 6% of Gemini's (finding 10). What we learned along the way, including our own mistakes, is in [docs/FINDINGS.md](https://github.com/kotwal-itpro/steadybatch/blob/main/docs/FINDINGS.md). The short version:
 - A model listed as available can still be refused when the batch is created.
 - Undefined fields look like model errors: one plain sentence per field took follow-up accuracy from 31% to 98-100%.
-- Models fail in different directions under the same instructions, and one setting (Claude's thinking) flipped the direction on the same model.
+- Models fail in different directions under the same instructions, and one setting (Claude's thinking) moved the same model from balanced mistakes to mostly harsh ones.
 - A model that decides for itself when to think can use up the whole `max_tokens` budget and return nothing.
 - A big job can be refused with a misleading "quota exceeded" error, and a dropped connection can stop an eight-hour run; the checkpoint resumed it without resending anything.
 - Temperature 0 doesn't mean the same answer twice.
