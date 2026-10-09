@@ -23,7 +23,7 @@ If you're turning a million documents into structured data, each of those turns 
 - **Gives results back in your order.** Whatever order the provider returns things in, you get them back in the order you sent them.
 - **Stays under provider limits.** Work is split so each batch stays under the provider's count and size caps.
 
-It works with the OpenAI Batch API, Gemini API batch mode, the Anthropic Message Batches API, and self-hosted vLLM. AWS Bedrock is next (see [docs/ROADMAP.md](docs/ROADMAP.md)).
+It works with the OpenAI Batch API, Gemini API batch mode, the Anthropic Message Batches API, and self-hosted vLLM. AWS Bedrock is next (see [docs/ROADMAP.md](https://github.com/kotwal-itpro/steadybatch/blob/main/docs/ROADMAP.md)).
 
 ## Quick start
 
@@ -60,7 +60,7 @@ for r in report.results:          # same order as `requests`
 
 Run the same script again after a crash and it carries on from `job.sqlite`.
 
-Before a big job, read [docs/GUIDE.md](docs/GUIDE.md): ten steps for running a batch job you can trust, each one learned from a real run.
+Before a big job, read [docs/GUIDE.md](https://github.com/kotwal-itpro/steadybatch/blob/main/docs/GUIDE.md): ten steps for running a batch job you can trust, each one learned from a real run.
 
 ## The benchmark
 
@@ -97,7 +97,7 @@ pip install matplotlib   # optional, for the charts
 steadybatch-bench report runs/openai-1 runs/gemini-1 --out results/latest
 ```
 
-Published results go in [results/](results/), one folder per run.
+Published results go in [results/](https://github.com/kotwal-itpro/steadybatch/blob/main/results/), one folder per run.
 
 Useful `run` options for real jobs:
 - `--instructions FILE` adds plain-language field definitions to the prompt (see finding 3 below for why this matters)
@@ -106,7 +106,7 @@ Useful `run` options for real jobs:
 
 ### Results so far
 
-1,000 synthetic support tickets with known answers, the same schema and field definitions on every provider, batch prices taken on 2026-10-07. Full tables: [results/latest/summary.md](results/latest/summary.md).
+1,000 synthetic support tickets with known answers, the same schema and field definitions on every provider, batch prices taken on 2026-10-07. Full tables: [results/latest/summary.md](https://github.com/kotwal-itpro/steadybatch/blob/main/results/latest/summary.md).
 
 | Model | Returned | Retries | Sentiment accuracy | Median batch time | Cost per 1,000 records |
 |---|---|---|---|---|---|
@@ -118,7 +118,7 @@ Useful `run` options for real jobs:
 
 \* GPU time for the run at $0.50/hour on demand. The whole rented-GPU session, including installing vLLM, downloading the model and one-time compilation, cost about $0.05. For vLLM the time is the whole run, since there is no queue.
 
-All five got product and issue type 100% right. At 10,000 records, OpenAI and Gemini again returned every line with no retries. **At 100,000 records, all three hosted providers returned 100,000 of 100,000 with no retries**, at the same accuracy; what changed was turnaround (Gemini 45 minutes in 10 batches, Claude 2 h 44 min as one batch, OpenAI's batches slowing from 14 to 84 minutes through the day). Sending the same records again changed 0.7% of OpenAI's answers, 3% of Claude's and 6% of Gemini's (finding 10). What we learned along the way, including our own mistakes, is in [docs/FINDINGS.md](docs/FINDINGS.md). The short version:
+All five got product and issue type 100% right. At 10,000 records, OpenAI and Gemini again returned every line with no retries. **At 100,000 records, all three hosted providers returned 100,000 of 100,000 with no retries**, at the same accuracy; what changed was turnaround (Gemini 45 minutes in 10 batches, Claude 2 h 44 min as one batch, OpenAI's batches slowing from 14 to 84 minutes through the day). Sending the same records again changed 0.7% of OpenAI's answers, 3% of Claude's and 6% of Gemini's (finding 10). What we learned along the way, including our own mistakes, is in [docs/FINDINGS.md](https://github.com/kotwal-itpro/steadybatch/blob/main/docs/FINDINGS.md). The short version:
 - A model listed as available can still be refused when the batch is created.
 - Undefined fields look like model errors: one plain sentence per field took follow-up accuracy from 31% to 98-100%.
 - Models fail in different directions under the same instructions, and one setting (Claude's thinking) flipped the direction on the same model.
@@ -132,7 +132,7 @@ Fill in `examples/prices.example.json` from each provider's pricing page on the 
 
 ## Running on Kubernetes
 
-A batch job fits well as a Kubernetes Job. Keep the checkpoint on a persistent volume so a rescheduled pod picks up where the last one stopped. See [k8s/job.yaml](k8s/job.yaml).
+A batch job fits well as a Kubernetes Job. Keep the checkpoint on a persistent volume so a rescheduled pod picks up where the last one stopped. See [k8s/job.yaml](https://github.com/kotwal-itpro/steadybatch/blob/main/k8s/job.yaml).
 
 ## Testing
 
@@ -151,7 +151,7 @@ Early, and moving. The core is tested against a fake provider that misbehaves on
 
 ## Citing
 
-If you use steadybatch or the benchmark results in your work, please cite it: Kotwal, A. P. *steadybatch: reliable batch LLM inference*. Zenodo. https://doi.org/10.5281/zenodo.23221956 (see [CITATION.cff](CITATION.cff)).
+If you use steadybatch or the benchmark results in your work, please cite it: Kotwal, A. P. *steadybatch: reliable batch LLM inference*. Zenodo. https://doi.org/10.5281/zenodo.23221956 (see [CITATION.cff](https://github.com/kotwal-itpro/steadybatch/blob/main/CITATION.cff)).
 
 ## License
 

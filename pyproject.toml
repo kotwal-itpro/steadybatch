@@ -9,12 +9,20 @@ description = "Run millions of LLM requests through batch APIs without silent fa
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
-authors = [{ name = "Ankur Kotwal", email = "kotwal.itpro@gmail.com" }]
-keywords = ["llm", "batch", "inference", "openai", "anthropic", "vllm", "reliability"]
+authors = [{ name = "Ankur Partap Kotwal", email = "kotwal.itpro@gmail.com" }]
+keywords = ["llm", "batch", "inference", "openai", "anthropic", "gemini", "vllm", "reliability", "benchmark"]
 classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
   "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: System :: Distributed Computing",
 ]
 dependencies = ["jsonschema>=4.0"]
 
@@ -31,9 +39,17 @@ steadybatch-bench = "steadybatch.bench:main"
 
 [project.urls]
 Homepage = "https://github.com/kotwal-itpro/steadybatch"
+Documentation = "https://github.com/kotwal-itpro/steadybatch/blob/main/docs/GUIDE.md"
+Findings = "https://github.com/kotwal-itpro/steadybatch/blob/main/docs/FINDINGS.md"
+Issues = "https://github.com/kotwal-itpro/steadybatch/issues"
+DOI = "https://doi.org/10.5281/zenodo.23221956"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/steadybatch"]
+
+[tool.hatch.build.targets.sdist]
+# Keep the source package small: benchmark results and generated data live on GitHub.
+exclude = ["/results", "/runs", "/examples/*.jsonl", "/.github", "/scripts"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
