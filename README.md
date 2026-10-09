@@ -27,11 +27,11 @@ It works with the OpenAI Batch API, Gemini API batch mode, the Anthropic Message
 
 ## Quick start
 
-steadybatch isn't on PyPI yet, so install it straight from GitHub. Pick the providers you need in the brackets:
+Install from PyPI. Pick the providers you need in the brackets:
 
 ```bash
-pip install "steadybatch[openai,gemini] @ git+https://github.com/kotwal-itpro/steadybatch.git"
-# other options: anthropic, vllm
+pip install "steadybatch[openai,gemini,anthropic]"
+# other extras: vllm (self-hosted), report (charts)
 ```
 
 ```python

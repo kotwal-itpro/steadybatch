@@ -19,8 +19,8 @@ identifiers:
     value: "10.5281/zenodo.23221957"
     description: "v0.1.0"
 license: Apache-2.0
-version: 0.2.0
-date-released: "2026-10-07"
+version: 0.2.1
+date-released: "2026-10-09"
 keywords:
   - large language models
   - batch inference

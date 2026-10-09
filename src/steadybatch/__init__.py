@@ -4,4 +4,4 @@ from .models import Outcome, Request, Result
 from .runner import RunReport, Runner
 
 __all__ = ["Outcome", "Request", "Result", "RunReport", "Runner"]
-__version__ = "0.2.0"
+__version__ = "0.2.1"
