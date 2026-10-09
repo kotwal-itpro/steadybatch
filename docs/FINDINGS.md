@@ -190,7 +190,7 @@ run stops. Run summaries count `submit_retries`. For planning: batch turnaround 
 provider's load at the time, not just the job size, so budget for the worst batch, not the
 first one.
 
-## 10. The same records, sent again, don't always get the same answer (early look, 2026-10-07)
+## 10. The same records, sent again, don't always get the same answer
 
 **What happened.** Each larger dataset starts with the records of the smaller one, so the
 1,000, 10,000 and 100,000-record runs (sent hours apart on the same day) overlap. Comparing
@@ -210,6 +210,23 @@ one record in sixteen changed between two runs of the same request on the same d
 pipeline that reprocesses data, or compares this week's numbers with last week's, will see
 some change that comes from the model, not the data.
 
-**Next.** The scheduled day 2 and day 3 runs (same 1,000 records, all three providers) measure
-this properly across days. This early look comes from runs of different sizes, so batch
-composition differed between the runs being compared.
+**Across days (2026-10-07, 08 and 09).** The same 1,000 records were sent to each provider once a
+day for three days, in identical batches:
+
+| Provider | Setting | Same answer on all 3 days | Records that changed at least once | Day-to-day pairs, same answer |
+|---|---|---|---|---|
+| gpt-4.1-mini | temperature 0 | 99.3% | 7 (5 sentiment, 2 follow-up) | 99.4%, 99.5%, 99.7% |
+| claude-haiku-5-5, thinking off | temperature not settable | 94.4% | 56 (all sentiment) | 97.1%, 96.1%, 95.6% |
+| gemini-3.5-flash-lite | temperature 0 | 87.5% | 125 (121 sentiment, 4 follow-up) | 90.8%, 91.7%, 92.5% |
+
+The aggregate barely moves. Sentiment accuracy by day was 92.9%, 92.9% and 92.9% on OpenAI,
+91.0%, 90.5% and 90.7% on Claude, and 82.1%, 81.3% and 81.0% on Gemini. But every record that
+changed its answer was right on at least one day and wrong on another: the providers flip on the
+borderline records, and a different subset lands on each side every day. Across days the
+spread is wider than the same-day early look above (Gemini 87.5% stable over three days against
+93.5% to 94.5% for a single pair), so a single repeat underestimates it.
+
+**What to do about it.** Treat run-to-run variation as noise with a known size. When comparing two
+runs, a change smaller than this spread on the borderline fields is not a signal. For fields that
+must not drift, pin the model version, keep the prompt identical, and if the answer matters more
+than the cost, send the record twice and flag disagreements for review.
