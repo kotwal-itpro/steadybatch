@@ -20,3 +20,4 @@ Run,Provider,Model,Records,OK,Failed,Missing,Errored,Invalid,Retried,Median batc
 2026-10-09-anthropic-claude-haiku-5-5-nothink-1000-r3,anthropic,claude-haiku-5-5,1000,1000,0,0,0,0,0,1332.3,1332.3,0.0481,0.9768
 2026-10-09-gemini-3.5-flash-lite-1000-r3,gemini,gemini-3.5-flash-lite,1000,1000,0,0,0,0,0,183.0,183.0,0.0883,0.9523
 2026-10-09-openai-gpt-4.1-mini-1000-r3,openai,gpt-4.1-mini,1000,1000,0,0,0,0,0,243.8,243.8,0.085,0.977
+2026-10-14-vllm-qwen2.5-7b-instruct-100000-r1,vllm,Qwen/Qwen2.5-7B-Instruct,100000,100000,0,0,0,0,0,1314.5,2483.3,0.0047,0.9568

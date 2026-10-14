@@ -79,7 +79,7 @@ Run the same records again on another day and compare. It tells you how much you
 
 ## 10. Self-hosting: what it takes
 
-`scripts/run_vllm_baseline.sh` runs the same benchmark on one rented GPU with vLLM. On an NVIDIA L4 ($0.50/hour on demand), Qwen2.5-7B-Instruct did 1,000 records in 29 seconds, about $0.004 per 1,000 records of GPU time. The first run also spent about 8 minutes installing, downloading the model and compiling, which cost more than the run itself. Copy the `runs/` folder off the machine before you shut it down: the disk is erased.
+`scripts/run_vllm_baseline.sh` runs the same benchmark on one rented GPU with vLLM. On an NVIDIA L4 ($0.50/hour on demand), Qwen2.5-7B-Instruct did 1,000 records in 29 seconds, about $0.004 per 1,000 records of GPU time. The first run also spent about 8 minutes installing, downloading the model and compiling, which cost more than the run itself. At 100,000 records it ran at the same pace: ten batches of 10,000, about 4.6 minutes each, 48 minutes and $0.47 of GPU time in all. If vLLM fails at startup with a FlashInfer `ninja` build error, set `VLLM_USE_FLASHINFER_SAMPLER=0` and run again; that uses vLLM's built-in sampler. Copy the `runs/` folder off the machine before you shut it down: the disk is erased.
 
 ## Record what you ran
 

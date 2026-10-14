@@ -1,0 +1,41 @@
+{
+  "provider": "vllm",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "instructions_file": "examples/support_ticket.instructions.txt",
+  "thinking": "model default",
+  "max_tokens": 300,
+  "records": 100000,
+  "ok": 100000,
+  "failed_after_retries": 0,
+  "outcomes": {
+    "ok": 100000,
+    "error": 0,
+    "missing": 0,
+    "invalid": 0
+  },
+  "lines_missing_seen": 0,
+  "lines_errored_seen": 0,
+  "lines_invalid_seen": 0,
+  "batches_submitted": 10,
+  "capacity_refusals": 0,
+  "submit_retries": 0,
+  "retried_records": 0,
+  "input_tokens": 40338367,
+  "output_tokens": 2948817,
+  "wall_seconds": 2899.0,
+  "batch_seconds_median": 1314.5,
+  "batch_seconds_max": 2483.3,
+  "field_accuracy": {
+    "product": 1.0,
+    "issue_type": 1.0,
+    "sentiment": 0.8348,
+    "needs_follow_up": 0.9924
+  },
+  "hardware": "1x NVIDIA L4 24 GB (RunPod on-demand, EU-RO-1, driver 595.91.07), vLLM 0.31.0 installed from PyPI 2026-10-14",
+  "gpu_hourly_usd": 0.59,
+  "cost_usd": 0.475,
+  "cost_per_1000_records_usd": 0.0047,
+  "compute_seconds_per_batch": "about 274 (each 10,000-record batch runs inside submit; log times 08:43:25 to 09:29:15 UTC)",
+  "cost_note": "GPU time for the run itself (wall_seconds) at the on-demand price. The whole pod session, including installing vLLM, downloading the model, a first attempt that stopped at engine startup, and copying the results, was billed $0.56 in total.",
+  "run_note": "vLLM runs each batch to completion inside submit(), so batch_seconds_* here measure submit-to-collect (all batches are collected at the end), not compute time. The first attempt failed before processing anything: FlashInfer's sampling kernel failed to build on this pod (ninja build error). The run was restarted with VLLM_USE_FLASHINFER_SAMPLER=0, which uses vLLM's built-in sampler. Same data file as the hosted 100k runs (sha1 15a03674b497c7c6849e6a97761e19638b50f273)."
+}

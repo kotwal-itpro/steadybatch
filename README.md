@@ -116,9 +116,9 @@ Useful `run` options for real jobs:
 | claude-haiku-5-5, thinking disabled (Anthropic) | 1,000 / 1,000 | 0 | 91.0% | 5 min | $0.048 |
 | Qwen2.5-7B-Instruct, self-hosted (vLLM, 1x L4) | 1,000 / 1,000 | 0 | 85.4% | 29 s | $0.004* |
 
-\* GPU time for the run at $0.50/hour on demand. The whole rented-GPU session, including installing vLLM, downloading the model and one-time compilation, cost about $0.05. For vLLM the time is the whole run, since there is no queue.
+\* GPU time for the run at $0.50/hour on demand. The whole rented-GPU session, including installing vLLM, downloading the model and one-time compilation, cost about $0.05. For vLLM the time is the whole run, since there is no queue. At 100,000 records the same setup took 48 minutes of GPU time ($0.0047 per 1,000 records at $0.59/hour); the whole session cost $0.56.
 
-All five got product and issue type 100% right. At 10,000 records, OpenAI and Gemini again returned every line with no retries. **At 100,000 records, all three hosted providers returned 100,000 of 100,000 with no retries**, at the same accuracy; what changed was turnaround (Gemini 45 minutes in 10 batches, Claude 2 h 44 min as one batch, OpenAI's batches slowing from 14 to 84 minutes through the day). Sending the same 1,000 records on three days in a row changed the answer at least once on 0.7% of records on OpenAI, 5.6% on Claude and 12.5% on Gemini, while each provider's overall accuracy stayed flat (finding 10). What we learned along the way, including our own mistakes, is in [docs/FINDINGS.md](https://github.com/kotwal-itpro/steadybatch/blob/main/docs/FINDINGS.md). The short version:
+All five got product and issue type 100% right. At 10,000 records, OpenAI and Gemini again returned every line with no retries. **At 100,000 records, all three hosted providers and the self-hosted model returned 100,000 of 100,000 with no retries**, at the same accuracy; what changed was turnaround (Gemini 45 minutes in 10 batches, Claude 2 h 44 min as one batch, OpenAI's batches slowing from 14 to 84 minutes through the day, the self-hosted model a steady 4.6 minutes per 10,000 records, 48 minutes in all). Sending the same 1,000 records on three days in a row changed the answer at least once on 0.7% of records on OpenAI, 5.6% on Claude and 12.5% on Gemini, while each provider's overall accuracy stayed flat (finding 10). The self-hosted model, run again a week later, gave the same answers on 999 of the same 1,000 records (finding 11). What we learned along the way, including our own mistakes, is in [docs/FINDINGS.md](https://github.com/kotwal-itpro/steadybatch/blob/main/docs/FINDINGS.md). The short version:
 - A model listed as available can still be refused when the batch is created.
 - Undefined fields look like model errors: one plain sentence per field took follow-up accuracy from 31% to 98-100%.
 - Models fail in different directions under the same instructions, and one setting (Claude's thinking) moved the same model from balanced mistakes to mostly harsh ones.
@@ -147,7 +147,7 @@ The tests use a fake provider that drops lines, returns errors, sends malformed 
 
 ## Status
 
-Early, and moving. The core is tested against a fake provider that misbehaves on purpose. The OpenAI, Gemini and Anthropic adapters have run real jobs of 1,000, 10,000 and 100,000 records against the live services. The vLLM adapter has run 1,000 records on a rented NVIDIA L4. Issues and pull requests are welcome.
+Early, and moving. The core is tested against a fake provider that misbehaves on purpose. The OpenAI, Gemini and Anthropic adapters have run real jobs of 1,000, 10,000 and 100,000 records against the live services. The vLLM adapter has run 1,000 and 100,000 records on a rented NVIDIA L4. Issues and pull requests are welcome.
 
 ## Citing
 

@@ -230,3 +230,46 @@ spread is wider than the same-day early look above (Gemini 87.5% stable over thr
 runs, a change smaller than this spread on the borderline fields is not a signal. For fields that
 must not drift, pin the model version, keep the prompt identical, and if the answer matters more
 than the cost, send the record twice and flag disagreements for review.
+
+## 11. The self-hosted model scaled to 100,000 records and repeated itself (vLLM, 2026-10-14)
+
+**What happened.** We ran the same 100,000 records through Qwen2.5-7B-Instruct on vLLM, on one
+rented NVIDIA L4 (24 GB), a week after the hosted 100k runs. All 100,000 came back, with no
+missing, errored or invalid lines and no retries. There is no queue, so time was just compute:
+ten batches of 10,000 at about 4.6 minutes each, 48 minutes in all, the same pace as the
+1,000-record run (29 seconds per 1,000). GPU time cost $0.47 ($0.0047 per 1,000 records at
+$0.59/hour); the whole session, including setup and one failed start, cost $0.56.
+
+| Setup | Records | Returned | Sentiment accuracy | Time | Cost per 1,000 |
+|---|---|---|---|---|---|
+| gpt-4.1-mini (OpenAI batch) | 100,000 | 100,000 | 92.1% | about 10 h, batches 14 to 84 min | $0.085 |
+| gemini-3.5-flash-lite (Gemini batch) | 100,000 | 100,000 | 80.6% | 45 min | $0.088 |
+| claude-haiku-5-5, thinking off (Anthropic batch) | 100,000 | 100,000 | 90.7% | 2 h 44 min | $0.048 |
+| Qwen2.5-7B-Instruct (vLLM, 1x L4) | 100,000 | 100,000 | 83.5% | 48 min | $0.0047 |
+
+Sentiment accuracy was 85.4% on the first 1,000 records, the same as the 1,000-record run, and
+between 83.1% and 83.9% in each block of 10,000, so the lower overall figure is the larger
+sample, not drift. Every one of its 16,523 sentiment mistakes went the same way: neutral or
+positive read as negative (10,959 and 5,564). gpt-4.1-mini also leaned only one way at 100k
+(all 7,862 of its mistakes were neutral read as negative), but it never read a positive ticket as
+negative. Gemini's mistakes went mostly the other way (16,960 negative read as neutral), and
+Claude's went both ways.
+
+**It repeated itself.** The first 1,000 of these records are the 1,000 from the October 7 run.
+A week later, on a different machine with a different GPU driver, but the same vLLM release
+(0.31.0, the latest on both dates), 999 of the 1,000 came back with the same answer on every
+field. The one change was a follow-up flag. Compare finding 10: across three days the hosted
+services changed at least one answer on 0.7% (OpenAI), 5.6% (Claude) and 12.5% (Gemini) of the
+same records.
+
+**What went wrong.** The first start failed before processing anything: FlashInfer's sampling
+kernel is compiled on first use, and the build (`ninja`) failed on this pod. Setting
+`VLLM_USE_FLASHINFER_SAMPLER=0` uses vLLM's built-in sampler instead, and the second start
+worked. The run summary records this.
+
+**What it means.** At this size, self-hosting was about 10 times cheaper per record than the
+cheapest hosted batch API here, and when you control the model, weights and software, the
+answers repeat. The trade-offs: the model is smaller and less accurate on the borderline field,
+its mistakes all lean one way, and you run the machine. A run summary's `batch_seconds_*` fields
+mean submit-to-collect, which for vLLM is not compute time, since each batch runs inside submit
+and all are collected at the end; the log timestamps give the real per-batch time.
