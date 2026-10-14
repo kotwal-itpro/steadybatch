@@ -147,7 +147,7 @@ The tests use a fake provider that drops lines, returns errors, sends malformed 
 
 ## Status
 
-Early, and moving. The core is tested against a fake provider that misbehaves on purpose. The OpenAI, Gemini and Anthropic adapters have run real jobs of 1,000 to 10,000 records against the live services (100,000 is in progress). The vLLM adapter has run on a rented NVIDIA L4. Issues and pull requests are welcome.
+Early, and moving. The core is tested against a fake provider that misbehaves on purpose. The OpenAI, Gemini and Anthropic adapters have run real jobs of 1,000, 10,000 and 100,000 records against the live services. The vLLM adapter has run 1,000 records on a rented NVIDIA L4. Issues and pull requests are welcome.
 
 ## Citing
 
