@@ -10,7 +10,7 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
 authors = [{ name = "Ankur Partap Kotwal", email = "kotwal.itpro@gmail.com" }]
-keywords = ["llm", "batch", "inference", "openai", "anthropic", "gemini", "vllm", "reliability", "benchmark"]
+keywords = ["llm", "batch", "inference", "openai", "anthropic", "gemini", "vllm", "sglang", "reliability", "benchmark"]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
@@ -31,6 +31,7 @@ openai = ["openai>=1.40"]
 anthropic = ["anthropic>=1.0"]
 gemini = ["google-genai>=1.20"]
 vllm = ["vllm>=0.6"]
+sglang = ["sglang>=0.5"]
 report = ["matplotlib>=3.7"]
 dev = ["pytest>=8"]
 

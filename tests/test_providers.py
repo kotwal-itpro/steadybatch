@@ -244,6 +244,41 @@ def test_vllm_submit_maps_outputs_in_order_and_flags_truncation():
     assert p.status(bid).state is BatchState.DONE
 
 
+# --- SGLang --------------------------------------------------------------
+
+from steadybatch.providers.sglang_offline import SGLangOffline, sampling_params
+
+
+def test_sglang_sampling_params_carry_schema_and_budget():
+    params = sampling_params(prepared())
+    assert params["temperature"] == 0.0 and params["max_new_tokens"] == 1024
+    assert json.loads(params["json_schema"]) == SCHEMA
+
+
+def test_sglang_submit_renders_chat_maps_outputs_and_flags_truncation():
+    class FakeTokenizer:
+        def apply_chat_template(self, messages, tokenize, add_generation_prompt):
+            assert tokenize is False and add_generation_prompt is True
+            return "|".join(m["role"] for m in messages)
+
+    class FakeEngine:
+        def generate(self, prompt, sampling_params):
+            self.seen = prompt, sampling_params
+            return [{"text": '{"x":"1"}', "meta_info": {"prompt_tokens": 3, "completion_tokens": 2,
+                                                        "finish_reason": {"type": "stop"}}},
+                    {"text": '{"x":', "meta_info": {"prompt_tokens": 1, "completion_tokens": 1,
+                                                    "finish_reason": {"type": "length", "length": 1}}}]
+
+    engine = FakeEngine()
+    p = SGLangOffline("m", engine=engine, tokenizer=FakeTokenizer())
+    bid = p.submit([prepared("a"), prepared("b")])
+    out = list(p.results(bid))
+    assert engine.seen[0] == ["system|user", "system|user"] and len(engine.seen[1]) == 2
+    assert [(r.custom_id, r.input_tokens, r.output_tokens) for r in out] == [("a", 3, 2), ("b", 1, 1)]
+    assert out[0].error is None and "truncated" in out[1].error
+    assert p.status(bid).state is BatchState.DONE
+
+
 def test_each_adapter_recognises_a_full_queue():
     class APIError(Exception):
         def __init__(self, msg, status_code=None, code=None):

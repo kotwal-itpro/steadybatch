@@ -22,6 +22,11 @@ def get_provider(name: str, model: str | None = None, *, thinking: str | None = 
         if not model:
             raise ValueError("vllm needs a model name")
         return VLLMOffline(model)
+    if name == "sglang":
+        from .sglang_offline import SGLangOffline
+        if not model:
+            raise ValueError("sglang needs a model name")
+        return SGLangOffline(model)
     if name == "gemini":
         from .gemini_batch import GeminiBatch
         return GeminiBatch()

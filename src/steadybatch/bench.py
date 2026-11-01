@@ -278,7 +278,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     run = sub.add_parser("run", help="run one workload on one provider")
-    run.add_argument("--provider", required=True, choices=["fake", "openai", "anthropic", "vllm", "gemini", "bedrock"])
+    run.add_argument("--provider", required=True, choices=["fake", "openai", "anthropic", "vllm", "sglang", "gemini", "bedrock"])
     run.add_argument("--model", required=True)
     run.add_argument("--data", required=True)
     run.add_argument("--schema")

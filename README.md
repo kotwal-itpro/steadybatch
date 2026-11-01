@@ -31,7 +31,7 @@ Install from PyPI. Pick the providers you need in the brackets:
 
 ```bash
 pip install "steadybatch[openai,gemini,anthropic]"
-# other extras: vllm (self-hosted), report (charts)
+# other extras: vllm or sglang (self-hosted), report (charts)
 ```
 
 ```python
