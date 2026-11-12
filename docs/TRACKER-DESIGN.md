@@ -73,8 +73,8 @@ New code:
 
 ## Cost and safety
 
-- 1,200 records a day. At the measured ~$0.05 per 1,000 records that is about $0.06 a day,
-  roughly **$2 a month**.
+- 1,200 records a day. The real test round on 2026-11-12 cost $0.044 for 600 records ($0.048 to
+  $0.088 per 1,000 by provider), so about $0.09 a day, roughly **$3 a month**.
 - API keys live only in GitHub repository secrets, added by Ankur. The workflows run only on
   schedule and manual dispatch, never on pull requests, so a fork can't reach the secrets.
 - A hard cap in code: at most 500 records per batch and 4 batches per provider per day, whatever
@@ -122,6 +122,8 @@ New code:
 ## Before it goes live
 
 1. ~~Check each provider's terms on publishing measured performance.~~ Done 2026-11-12: nothing found against it. Anthropic and Google have no benchmark clause; OpenAI's usage policies allow model evaluation and benchmarking, and its sharing policy welcomes research publications about the API. Google's API Terms 5.e limits republishing returned content, so the tracker stores answer hashes, not answers. Don't use provider logos or suggest endorsement.
-2. One real round from this Mac (a few cents).
+2. ~~One real round from this Mac.~~ Done 2026-11-12: all three batches 200/200, 2 to 2.5 minutes each
+   (provider timestamps), no lost or broken lines, $0.044 in total. Gemini and Anthropic report no
+   start time, so queue time is OpenAI-only.
 3. Ankur adds the three repository secrets and a monthly spend limit per provider account.
 4. Turn on GitHub Pages (source: GitHub Actions), merge the branch, run the workflow once by hand.
