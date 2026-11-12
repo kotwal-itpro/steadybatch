@@ -17,6 +17,7 @@ provider did, not to repair it.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import sys
@@ -169,6 +170,12 @@ def submit(cfg: Config, *, make_provider: ProviderFactory = default_factory,
     return log
 
 
+def fingerprint(answer: Any) -> str:
+    """A short, stable hash of a parsed answer (key order doesn't matter)."""
+    blob = json.dumps(answer, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()[:16]
+
+
 def _accuracy(records: list[dict[str, Any]], answers: dict[str, Any]) -> tuple[dict[str, float], float | None]:
     fields: dict[str, list[int]] = {}
     exact: list[int] = []
@@ -251,15 +258,18 @@ def collect(cfg: Config, *, make_provider: ProviderFactory = default_factory,
                 except InvalidOutput:
                     counts["invalid"] += 1
 
+        # Keep only a fingerprint of each answer, not the answer itself: enough to tell
+        # whether it changed next time, and no model output is republished.
         latest_path = latest_dir / f"{tid}.json"
         previous = _read_json(latest_path, None)
+        prints = {k: fingerprint(v) for k, v in answers.items()}
         compared = changed = None
         if previous is not None:
-            both = set(previous) & set(answers)
+            both = set(previous) & set(prints)
             compared = len(both)
-            changed = sum(previous[k] != answers[k] for k in both)
-        if answers:
-            _write_json(latest_path, answers)
+            changed = sum(previous[k] != prints[k] for k in both)
+        if prints:
+            _write_json(latest_path, prints)
 
         field_acc, exact_acc = _accuracy(records, answers)
         cost = _cost(prices, b["provider"], in_tok, out_tok)

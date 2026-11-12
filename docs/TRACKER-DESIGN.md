@@ -28,7 +28,7 @@ answers) go to each provider's batch API twice a day.
 |---|---|
 | Turnaround | From the provider's own timestamps (OpenAI `created_at` to `completed_at`, Anthropic `created_at` to `ended_at`, Gemini's equivalent, to be checked). Polling delay doesn't affect it. |
 | Completeness | Lines missing, errored, or not valid JSON for the schema. steadybatch already counts these. |
-| Answer drift | Share of the 200 records whose answer changed since the previous run on the same provider. The same input set is used every time, so this is a clean daily signal (FINDINGS #10 showed 0.7% to 6%). |
+| Answer drift | Share of the 200 records whose answer changed since the previous run on the same provider. Only a hash of each answer is kept, so no model output is republished. The same input set is used every time, so this is a clean daily signal (FINDINGS #10 showed 0.7% to 6%). |
 | Accuracy | Field accuracy against the known answers. |
 | Model version | The model ID or fingerprint the provider reports on each line, so drift can be tied to a silent model update. |
 | Cost | Per 1,000 records, from token counts and the published price file. |
@@ -121,7 +121,7 @@ New code:
 
 ## Before it goes live
 
-1. Check each provider's terms on publishing measured performance.
+1. ~~Check each provider's terms on publishing measured performance.~~ Done 2026-11-12: nothing found against it. Anthropic and Google have no benchmark clause; OpenAI's usage policies allow model evaluation and benchmarking, and its sharing policy welcomes research publications about the API. Google's API Terms 5.e limits republishing returned content, so the tracker stores answer hashes, not answers. Don't use provider logos or suggest endorsement.
 2. One real round from this Mac (a few cents).
 3. Ankur adds the three repository secrets and a monthly spend limit per provider account.
 4. Turn on GitHub Pages (source: GitHub Actions), merge the branch, run the workflow once by hand.

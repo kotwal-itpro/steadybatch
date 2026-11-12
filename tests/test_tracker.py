@@ -187,3 +187,13 @@ def test_provider_timestamps_and_model_versions():
     r = GeminiBatch._parse({"key": "k", "response": {"modelVersion": "gemini-x-001",
                                                     "candidates": [{"content": {"parts": [{"text": "{}"}]}}]}})
     assert r.model_version == "gemini-x-001"
+
+
+def test_only_fingerprints_of_answers_are_kept(tmp_path):
+    cfg, clock = make_cfg(tmp_path), Clock()
+    p = FakeProvider(answer=demo_answer, clock=clock)
+    submit(cfg, make_provider=lambda t: p, clock=clock, env={"K1": "x"})
+    collect(cfg, make_provider=lambda t: p, clock=clock)
+    saved = json.loads((cfg.path("latest") / "openai-m1.json").read_text())
+    assert len(saved) == 20 and all(isinstance(v, str) and len(v) == 16 for v in saved.values())
+    assert "sentiment" not in json.dumps(saved)
