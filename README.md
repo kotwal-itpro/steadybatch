@@ -132,8 +132,8 @@ Fill in `examples/prices.example.json` from each provider's pricing page on the 
 
 ## Batch API tracker
 
-The `tracker/` folder runs a small public measurement of the batch APIs themselves. Twice a day
-(01:00 and 13:00 UTC) the same 200 requests go to the OpenAI, Gemini and Anthropic batch APIs, and
+The `tracker/` folder runs a small public measurement of the batch APIs themselves. Four times a day
+(01:00, 07:00, 13:00 and 19:00 UTC) the same 200 requests go to the OpenAI, Gemini and Anthropic batch APIs, and
 each run records how long the batch took (from the provider's own timestamps), whether every line
 came back, and how many answers changed since the previous run. A scheduled GitHub Actions job
 does the work and publishes the results as a page with the raw data. See

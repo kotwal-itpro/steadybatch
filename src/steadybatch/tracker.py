@@ -64,6 +64,10 @@ class Config:
         return min(int(self.raw.get("max_submits_per_day", 2)), HARD_MAX_SUBMITS_PER_DAY)
 
     @property
+    def max_monthly_cost_usd(self) -> float:
+        return float(self.raw.get("max_monthly_cost_usd_per_target", 10))
+
+    @property
     def give_up_after_s(self) -> float:
         return float(self.raw.get("give_up_after_hours", 50)) * 3600
 
@@ -145,6 +149,12 @@ def submit(cfg: Config, *, make_provider: ProviderFactory = default_factory,
         sent_today += sum(b["target"] == tid and _day(b["submitted_ts"]) == today for b in open_batches)
         if sent_today >= cfg.max_submits_per_day:
             log.append(f"{tid}: skipped, already {sent_today} today")
+            continue
+        month = today[:7]
+        spent = sum(r.get("cost_usd") or 0 for r in rows
+                    if r["target"] == tid and _day(r["submitted_ts"])[:7] == month)
+        if spent >= cfg.max_monthly_cost_usd:
+            log.append(f"{tid}: skipped, ${spent:.2f} spent this month (cap ${cfg.max_monthly_cost_usd:.2f})")
             continue
         provider = make_provider(t)
         schema = cfg.schema()

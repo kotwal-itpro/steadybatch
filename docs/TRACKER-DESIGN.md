@@ -1,6 +1,6 @@
 # Batch API tracker: design draft
 
-2026-11-12. Ankur chose two runs a day. Built on the `tracker` branch and tested on the fake provider; not pushed, nothing runs and nothing is spent until the steps under Plan are done.
+2026-11-12. Ankur chose two runs a day, then four (same day). Built on the `tracker` branch and tested on the fake provider; not pushed, nothing runs and nothing is spent until the steps under Plan are done.
 
 ## The gap
 
@@ -22,7 +22,7 @@ when will it be done, and will all of it come back?") has no public answer. This
 ## What it measures
 
 The same fixed 200 synthetic support tickets (from `examples/make_synthetic.py`, with known
-answers) go to each provider's batch API twice a day.
+answers) go to each provider's batch API four times a day.
 
 | Metric | How |
 |---|---|
@@ -37,15 +37,15 @@ Models at the start: `gpt-4.1-mini`, `gemini-3.5-flash-lite` and `claude-haiku-5
 the same three as the published study, so the tracker continues that data. A larger model per
 provider, and AWS Bedrock, can be added later.
 
-Batches go out at 01:00 UTC (evening in the US) and 13:00 UTC (morning in the US, the busy time in
-OpenRouter's data), so the data shows the time-of-day effect per provider.
+Batches go out at 01:00, 07:00, 13:00 and 19:00 UTC. 13:00 UTC is US morning, the busy time in
+OpenRouter's data, so the data shows the time-of-day effect per provider.
 
 ## How it runs
 
 GitHub Actions, in the public steadybatch repo. A job can run for at most 6 hours, but a batch can
 take 24, so submitting and collecting are separate:
 
-1. **Submit** (cron, 01:00 and 13:00 UTC): submits one batch per provider and records the batch IDs in
+1. **Submit** (cron, 01:00, 07:00, 13:00 and 19:00 UTC): submits one batch per provider and records the batch IDs in
    `tracker/open.json`, which the bot commits.
 2. **Collect** (cron, every 30 minutes): checks the open batches. For each finished one, it fetches
    the lines, validates them, compares them with the previous run, appends one row to
@@ -73,12 +73,14 @@ New code:
 
 ## Cost and safety
 
-- 1,200 records a day. The real test round on 2026-11-12 cost $0.044 for 600 records ($0.048 to
-  $0.088 per 1,000 by provider), so about $0.09 a day, roughly **$3 a month**.
+- 2,400 records a day. The real test round on 2026-11-12 cost $0.044 for 600 records ($0.048 to
+  $0.088 per 1,000 by provider), so about $0.18 a day, roughly **$5 to $6 a month** in total.
+- A spending cap in code: a provider is skipped for the rest of the month once its recorded cost
+  reaches $10 (`max_monthly_cost_usd_per_target`). Ankur set a $10 monthly limit on each account too.
 - API keys live only in GitHub repository secrets, added by Ankur. The workflows run only on
   schedule and manual dispatch, never on pull requests, so a fork can't reach the secrets.
 - A hard cap in code: at most 500 records per batch and 4 batches per provider per day, whatever
-  the config says (the config sets 200 and 2). Ankur also sets a monthly spend limit on
+  the config says (the config sets 200 and 4). Ankur also sets a monthly spend limit on
   each provider account.
 - Synthetic data only, public APIs only.
 
@@ -104,7 +106,7 @@ New code:
 
 ## Decisions
 
-- Two slots a day (Ankur, 2026-11-12).
+- Four slots a day (Ankur, 2026-11-12; first two, then four).
 - Same repo as the library, so the page sends traffic to it and builds on the existing DOI.
 
 ## What was built (branch `tracker`)

@@ -61,7 +61,7 @@ PAGE = r"""<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Batch API Tracker</title>
-<meta name="description" content="Measured turnaround, lost lines and answer drift for the OpenAI, Gemini and Anthropic batch APIs, run twice a day.">
+<meta name="description" content="Measured turnaround, lost lines and answer drift for the OpenAI, Gemini and Anthropic batch APIs, run four times a day.">
 <style>
 :root{color-scheme:light;
  --surface:#fcfcfb;--surface-2:#f3f2ef;--grid:#e4e3df;--text:#0b0b0b;--text-2:#52514e;--muted:#7a7975;
@@ -106,7 +106,7 @@ ul{color:var(--text-2);padding-left:20px}li{margin:4px 0}
 </style></head>
 <body><main>
 <h1>Batch API Tracker</h1>
-<p class="lede">Batch APIs promise results "within 24 hours". This page measures what actually happens: the same 200 requests go to each provider's batch API twice a day, and every run records how long it took, whether every line came back, and how many answers changed since the last run.</p>
+<p class="lede">Batch APIs promise results "within 24 hours". This page measures what actually happens: the same 200 requests go to each provider's batch API four times a day, and every run records how long it took, whether every line came back, and how many answers changed since the last run.</p>
 <p class="meta" id="updated"></p>
 
 <div class="tiles" id="tiles"></div>
@@ -136,7 +136,7 @@ ul{color:var(--text-2);padding-left:20px}li{margin:4px 0}
 <h2>How it works</h2>
 <ul>
 <li>200 synthetic support conversations with known answers, the same every run. Each model fills in four fields under a JSON Schema (<a href="https://github.com/kotwal-itpro/steadybatch/tree/main/tracker">inputs and settings</a>).</li>
-<li>Batches go out at 01:00 and 13:00 UTC from GitHub Actions, using <a href="https://github.com/kotwal-itpro/steadybatch">steadybatch</a>. A second job checks every 30 minutes and records each finished batch.</li>
+<li>Batches go out at 01:00, 07:00, 13:00 and 19:00 UTC from GitHub Actions, using <a href="https://github.com/kotwal-itpro/steadybatch">steadybatch</a>. A second job checks every 30 minutes and records each finished batch.</li>
 <li>Turnaround is the provider's finished time minus its created time. Lost lines are requests with no result at all. Nothing is resubmitted.</li>
 <li>Limits: 200-request batches may queue differently from very large jobs, and one account per provider can't tell you about every region or tier.</li>
 <li>Cost is computed from token counts and the published batch prices in <a href="https://github.com/kotwal-itpro/steadybatch/blob/main/tracker/prices.json">prices.json</a>.</li>

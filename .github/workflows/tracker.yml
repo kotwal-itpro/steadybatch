@@ -1,12 +1,12 @@
 # Batch API tracker (docs/TRACKER-DESIGN.md).
-# Sends one 200-record batch per provider at 01:00 and 13:00 UTC, collects finished
+# Sends one 200-record batch per provider at 01:00, 07:00, 13:00 and 19:00 UTC, collects finished
 # batches every 30 minutes, commits the data and republishes the page.
 # Runs only on schedule or by hand, never on pull requests, so forks can't reach the keys.
 name: tracker
 
 on:
   schedule:
-    - cron: "0 1,13 * * *"     # submit slots
+    - cron: "0 1,7,13,19 * * *"   # submit slots
     - cron: "*/30 * * * *"     # collect
   workflow_dispatch:
     inputs:
@@ -42,7 +42,7 @@ jobs:
       - run: pip install -e ".[openai,gemini,anthropic]"
 
       - name: Submit
-        if: github.event.schedule == '0 1,13 * * *' || inputs.submit
+        if: github.event.schedule == '0 1,7,13,19 * * *' || inputs.submit
         run: steadybatch-track submit
 
       - name: Collect

@@ -197,3 +197,13 @@ def test_only_fingerprints_of_answers_are_kept(tmp_path):
     saved = json.loads((cfg.path("latest") / "openai-m1.json").read_text())
     assert len(saved) == 20 and all(isinstance(v, str) and len(v) == 16 for v in saved.values())
     assert "sentiment" not in json.dumps(saved)
+
+
+def test_monthly_cost_cap_stops_submits(tmp_path):
+    cfg, clock = make_cfg(tmp_path, max_monthly_cost_usd_per_target=0.0001), Clock()
+    p = FakeProvider(answer=demo_answer, clock=clock)
+    submit(cfg, make_provider=lambda t: p, clock=clock, env={"K1": "x"})
+    collect(cfg, make_provider=lambda t: p, clock=clock)
+    clock.t += 60
+    log = submit(cfg, make_provider=lambda t: p, clock=clock, env={"K1": "x"})
+    assert "spent this month" in log[0] and len(p.submitted_batches) == 1
