@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Iterator
 
 from ..models import BatchStatus, PreparedRequest, RawResult
@@ -58,3 +59,16 @@ class BatchProvider(ABC):
     @abstractmethod
     def results(self, batch_id: str) -> Iterator[RawResult]:
         """Yield every line the provider returned, successes and errors alike."""
+
+
+def to_epoch(value) -> float | None:
+    """A provider timestamp (Unix seconds, datetime, or ISO string) as Unix seconds."""
+    if value is None or value == "":
+        return None
+    if isinstance(value, (int, float)):
+        return float(value) or None
+    if isinstance(value, datetime):
+        return value.timestamp()
+    if isinstance(value, str):
+        return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
+    return None

@@ -11,7 +11,7 @@ import json
 from typing import Iterator
 
 from ..models import BatchState, BatchStatus, PreparedRequest, RawResult
-from .base import BatchProvider
+from .base import BatchProvider, to_epoch
 
 _REASONING_PREFIXES = ("gpt-5", "o1", "o3", "o4")
 
@@ -93,7 +93,11 @@ class OpenAIBatch(BatchProvider):
         return BatchStatus(state, total=getattr(counts, "total", 0) or 0,
                            succeeded=getattr(counts, "completed", 0) or 0,
                            failed=getattr(counts, "failed", 0) or 0, detail=b.status,
-                           over_capacity=over_capacity)
+                           over_capacity=over_capacity,
+                           created_at=to_epoch(getattr(b, "created_at", None)),
+                           started_at=to_epoch(getattr(b, "in_progress_at", None)),
+                           ended_at=to_epoch(next((t for t in (getattr(b, k, None) for k in (
+                               "completed_at", "failed_at", "expired_at", "cancelled_at")) if t), None)))
 
     def results(self, batch_id: str) -> Iterator[RawResult]:
         b = self.client.batches.retrieve(batch_id)
@@ -122,6 +126,6 @@ class OpenAIBatch(BatchProvider):
         if choice.get("finish_reason") == "length":
             return RawResult(cid, ok=True, text=text, error="truncated (max_tokens)",
                              input_tokens=usage.get("prompt_tokens", 0),
-                             output_tokens=usage.get("completion_tokens", 0))
+                             output_tokens=usage.get("completion_tokens", 0), model_version=body.get("model"))
         return RawResult(cid, ok=True, text=text, input_tokens=usage.get("prompt_tokens", 0),
-                         output_tokens=usage.get("completion_tokens", 0))
+                         output_tokens=usage.get("completion_tokens", 0), model_version=body.get("model"))

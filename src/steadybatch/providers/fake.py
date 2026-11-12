@@ -10,6 +10,7 @@ from __future__ import annotations
 import itertools
 import json
 import random
+import time
 from typing import Callable, Iterator
 
 from ..models import BatchState, BatchStatus, PreparedRequest, RawResult
@@ -55,6 +56,8 @@ class FakeProvider(BatchProvider):
         answer: Callable[[PreparedRequest], str] = default_answer,
         seed: int = 7,
         fail_first_attempt_only: bool = False,
+        clock: Callable[[], float] = time.time,
+        turnaround: float = 0.0,
     ):
         self.drop_rate = drop_rate
         self.error_rate = error_rate
@@ -69,6 +72,9 @@ class FakeProvider(BatchProvider):
         self._batches: dict[str, list[RawResult]] = {}
         self._ids = itertools.count(1)
         self.submitted_batches: list[list[str]] = []
+        self.clock = clock
+        self.turnaround = turnaround  # seconds before a batch counts as finished
+        self._created: dict[str, float] = {}
 
     def submit(self, batch: list[PreparedRequest]) -> str:
         batch_id = f"fake-batch-{next(self._ids)}"
@@ -91,14 +97,20 @@ class FakeProvider(BatchProvider):
                 text = self.answer(req)
                 if self.nondeterministic and self.rng.random() < 0.5:
                     text = text.replace("}", ', "note": "varies"}', 1)
-            out.append(RawResult(req.custom_id, ok=True, text=text, input_tokens=100, output_tokens=20))
+            out.append(RawResult(req.custom_id, ok=True, text=text, input_tokens=100, output_tokens=20,
+                                 model_version="fake-1"))
         self._batches[batch_id] = out
+        self._created[batch_id] = self.clock()
         return batch_id
 
     def status(self, batch_id: str) -> BatchStatus:
         lines = self._batches[batch_id]
+        created = self._created[batch_id]
+        if self.clock() < created + self.turnaround:
+            return BatchStatus(BatchState.RUNNING, total=len(lines), created_at=created, started_at=created)
         return BatchStatus(BatchState.DONE, total=len(lines),
-                           succeeded=sum(r.ok for r in lines), failed=sum(not r.ok for r in lines))
+                           succeeded=sum(r.ok for r in lines), failed=sum(not r.ok for r in lines),
+                           created_at=created, started_at=created, ended_at=created + self.turnaround)
 
     def results(self, batch_id: str) -> Iterator[RawResult]:
         yield from self._batches[batch_id]

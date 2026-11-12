@@ -21,7 +21,7 @@ import json
 from typing import Iterator
 
 from ..models import BatchState, BatchStatus, PreparedRequest, RawResult
-from .base import BatchProvider
+from .base import BatchProvider, to_epoch
 
 
 class AnthropicBatch(BatchProvider):
@@ -74,7 +74,9 @@ class AnthropicBatch(BatchProvider):
             state = BatchState.RUNNING
         total = c.processing + c.succeeded + c.errored + c.canceled + c.expired
         return BatchStatus(state, total=total, succeeded=c.succeeded,
-                           failed=c.errored + c.canceled + c.expired, detail=b.processing_status)
+                           failed=c.errored + c.canceled + c.expired, detail=b.processing_status,
+                           created_at=to_epoch(getattr(b, "created_at", None)),
+                           ended_at=to_epoch(getattr(b, "ended_at", None)))
 
     def results(self, batch_id: str) -> Iterator[RawResult]:
         for entry in self.client.messages.batches.results(batch_id):
@@ -88,7 +90,8 @@ class AnthropicBatch(BatchProvider):
                 truncated = getattr(msg, "stop_reason", None) == "max_tokens"
                 yield RawResult(entry.custom_id, ok=True, text=text,
                                 error="truncated (max_tokens)" if truncated else None,
-                                input_tokens=msg.usage.input_tokens, output_tokens=msg.usage.output_tokens)
+                                input_tokens=msg.usage.input_tokens, output_tokens=msg.usage.output_tokens,
+                                model_version=getattr(msg, "model", None))
             elif result.type == "errored":
                 yield RawResult(entry.custom_id, ok=False, error=str(getattr(result, "error", "errored")))
             else:

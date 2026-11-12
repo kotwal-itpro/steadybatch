@@ -37,6 +37,7 @@ dev = ["pytest>=8"]
 
 [project.scripts]
 steadybatch-bench = "steadybatch.bench:main"
+steadybatch-track = "steadybatch.tracker:main"
 
 [project.urls]
 Homepage = "https://github.com/kotwal-itpro/steadybatch"
@@ -50,7 +51,7 @@ packages = ["src/steadybatch"]
 
 [tool.hatch.build.targets.sdist]
 # Keep the source package small: benchmark results and generated data live on GitHub.
-exclude = ["/results", "/runs", "/examples/*.jsonl", "/.github", "/scripts"]
+exclude = ["/results", "/runs", "/examples/*.jsonl", "/.github", "/scripts", "/tracker"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

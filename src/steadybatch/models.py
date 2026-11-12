@@ -50,6 +50,11 @@ class BatchStatus:
     # True when the provider refused the work because the account's queue is full,
     # not because anything is wrong with the requests.
     over_capacity: bool = False
+    # The provider's own timestamps (Unix seconds), when it reports them. They measure
+    # turnaround exactly, however often the caller polls.
+    created_at: float | None = None
+    started_at: float | None = None
+    ended_at: float | None = None
 
 
 @dataclass
@@ -62,6 +67,8 @@ class RawResult:
     error: str | None = None
     input_tokens: int = 0
     output_tokens: int = 0
+    # The exact model the provider says answered this line (e.g. a dated snapshot).
+    model_version: str | None = None
 
 
 class Outcome(str, Enum):

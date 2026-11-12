@@ -130,6 +130,21 @@ Write-up: [I Gave Two AI Models the Same Instructions. They Got It Wrong in Oppo
 
 Fill in `examples/prices.example.json` from each provider's pricing page on the day you run, and record the date with your results. Prices change.
 
+## Batch API tracker
+
+The `tracker/` folder runs a small public measurement of the batch APIs themselves. Twice a day
+(01:00 and 13:00 UTC) the same 200 requests go to the OpenAI, Gemini and Anthropic batch APIs, and
+each run records how long the batch took (from the provider's own timestamps), whether every line
+came back, and how many answers changed since the previous run. A scheduled GitHub Actions job
+does the work and publishes the results as a page with the raw data. See
+[docs/TRACKER-DESIGN.md](docs/TRACKER-DESIGN.md).
+
+```bash
+steadybatch-track submit    # send one batch per provider (needs the API keys)
+steadybatch-track collect   # record finished batches in tracker/data/runs.jsonl
+steadybatch-track site      # build the page into tracker/site
+```
+
 ## Running on Kubernetes
 
 A batch job fits well as a Kubernetes Job. Keep the checkpoint on a persistent volume so a rescheduled pod picks up where the last one stopped. See [k8s/job.yaml](https://github.com/kotwal-itpro/steadybatch/blob/main/k8s/job.yaml).

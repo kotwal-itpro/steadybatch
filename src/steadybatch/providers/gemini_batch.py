@@ -14,7 +14,7 @@ import json
 from typing import Iterator
 
 from ..models import BatchState, BatchStatus, PreparedRequest, RawResult
-from .base import BatchProvider
+from .base import BatchProvider, to_epoch
 
 _DONE = {"JOB_STATE_SUCCEEDED", "JOB_STATE_PARTIALLY_SUCCEEDED"}
 _FAILED = {"JOB_STATE_FAILED", "JOB_STATE_CANCELLED", "JOB_STATE_CANCELLING", "JOB_STATE_EXPIRED"}
@@ -91,7 +91,10 @@ class GeminiBatch(BatchProvider):
         stats = job.completion_stats
         ok = int(getattr(stats, "successful_count", 0) or 0) if stats else 0
         bad = int(getattr(stats, "failed_count", 0) or 0) if stats else 0
-        return BatchStatus(state, total=ok + bad, succeeded=ok, failed=bad, detail=state_name)
+        return BatchStatus(state, total=ok + bad, succeeded=ok, failed=bad, detail=state_name,
+                           created_at=to_epoch(getattr(job, "create_time", None)),
+                           started_at=to_epoch(getattr(job, "start_time", None)),
+                           ended_at=to_epoch(getattr(job, "end_time", None)))
 
     def results(self, batch_id: str) -> Iterator[RawResult]:
         job = self.client.batches.get(name=batch_id)
@@ -111,7 +114,8 @@ class GeminiBatch(BatchProvider):
         response = line.get("response") or {}
         usage = response.get("usageMetadata") or {}
         tokens = dict(input_tokens=usage.get("promptTokenCount", 0) or 0,
-                      output_tokens=usage.get("candidatesTokenCount", 0) or 0)
+                      output_tokens=usage.get("candidatesTokenCount", 0) or 0,
+                      model_version=response.get("modelVersion"))
         candidates = response.get("candidates") or []
         if not candidates:
             reason = (response.get("promptFeedback") or {}).get("blockReason", "no candidates")

@@ -1,0 +1,20 @@
+{
+  "_note": "Batch API tracker settings. Paths are relative to this file. See docs/TRACKER-DESIGN.md.",
+  "inputs": "inputs.jsonl",
+  "schema": "../examples/support_ticket.schema.json",
+  "instructions": "../examples/support_ticket.instructions.txt",
+  "prices": "prices.json",
+  "open": "open.json",
+  "runs": "data/runs.jsonl",
+  "latest": "data/latest",
+  "max_records": 200,
+  "max_tokens": 300,
+  "max_submits_per_day": 2,
+  "give_up_after_hours": 50,
+  "targets": [
+    {"provider": "openai", "model": "gpt-4.1-mini", "label": "OpenAI · gpt-4.1-mini", "key_env": "OPENAI_API_KEY"},
+    {"provider": "gemini", "model": "gemini-3.5-flash-lite", "label": "Gemini · gemini-3.5-flash-lite", "key_env": "GEMINI_API_KEY"},
+    {"provider": "anthropic", "model": "claude-haiku-5-5", "thinking": "disabled", "label": "Anthropic · claude-haiku-5-5 (thinking off)",
+     "id": "anthropic-claude-haiku-5-5-nothink", "key_env": "ANTHROPIC_API_KEY"}
+  ]
+}
