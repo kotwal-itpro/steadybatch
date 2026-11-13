@@ -1,0 +1,40 @@
+# Daily snapshot of how much the project is used: GitHub traffic (views, clones, referrers;
+# GitHub keeps only 14 days, so this keeps the history), stars and forks, and PyPI downloads.
+# Traffic needs a fine-grained token with "Administration: read-only" on this repo, saved as the
+# TRAFFIC_TOKEN secret; without it only the public numbers are recorded.
+name: usage
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: usage   # not "tracker": a queued run here must never replace a queued tracker run
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Snapshot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_TOKEN }}
+        run: python scripts/usage_snapshot.py --repo "$GITHUB_REPOSITORY" --out usage/daily.jsonl
+      - name: Commit
+        run: |
+          git config user.name "steadybatch-tracker"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add usage
+          git diff --cached --quiet && exit 0
+          git commit -m "usage: snapshot $(date -u +%Y-%m-%d)"
+          pushed=0; for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && pushed=1 && break; sleep 5; done; [ "$pushed" = 1 ]

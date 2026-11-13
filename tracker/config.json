@@ -12,10 +12,20 @@
   "max_submits_per_day": 4,
   "max_monthly_cost_usd_per_target": 10,
   "give_up_after_hours": 50,
+  "inputs_large": "inputs-5k.jsonl",
+  "selfhost": "data/selfhost.jsonl",
+  "_targets_note": "Targets with every_days and slot_hours send a larger batch once a week (records capped at 5,000 in code).",
   "targets": [
     {"provider": "openai", "model": "gpt-4.1-mini", "label": "OpenAI · gpt-4.1-mini", "key_env": "OPENAI_API_KEY"},
     {"provider": "gemini", "model": "gemini-3.5-flash-lite", "label": "Gemini · gemini-3.5-flash-lite", "key_env": "GEMINI_API_KEY"},
     {"provider": "anthropic", "model": "claude-haiku-5-5", "thinking": "disabled", "label": "Anthropic · claude-haiku-5-5 (thinking off)",
-     "id": "anthropic-claude-haiku-5-5-nothink", "key_env": "ANTHROPIC_API_KEY"}
+     "id": "anthropic-claude-haiku-5-5-nothink", "key_env": "ANTHROPIC_API_KEY"},
+    {"provider": "openai", "model": "gpt-4.1-mini", "id": "openai-gpt-4.1-mini-5k", "label": "OpenAI · gpt-4.1-mini, 5,000 requests",
+     "key_env": "OPENAI_API_KEY", "inputs": "inputs-5k.jsonl", "records": 5000, "every_days": 7, "slot_hours": [13]},
+    {"provider": "gemini", "model": "gemini-3.5-flash-lite", "id": "gemini-gemini-3.5-flash-lite-5k", "label": "Gemini · gemini-3.5-flash-lite, 5,000 requests",
+     "key_env": "GEMINI_API_KEY", "inputs": "inputs-5k.jsonl", "records": 5000, "every_days": 7, "slot_hours": [13]},
+    {"provider": "anthropic", "model": "claude-haiku-5-5", "thinking": "disabled", "id": "anthropic-claude-haiku-5-5-nothink-5k",
+     "label": "Anthropic · claude-haiku-5-5 (thinking off), 5,000 requests",
+     "key_env": "ANTHROPIC_API_KEY", "inputs": "inputs-5k.jsonl", "records": 5000, "every_days": 7, "slot_hours": [13]}
   ]
 }

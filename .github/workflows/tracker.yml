@@ -1,6 +1,7 @@
 # Batch API tracker (docs/TRACKER-DESIGN.md).
-# Sends one 200-record batch per provider at 01:00, 07:00, 13:00 and 19:00 UTC, collects finished
-# batches every 30 minutes, commits the data and republishes the page.
+# Sends one 200-record batch per provider at 01:00, 07:00, 13:00 and 19:00 UTC (plus a weekly
+# 5,000-record batch in the 13:00 slot), collects finished batches every 30 minutes, opens an issue
+# for serious incidents, commits the data and republishes the page.
 # Runs only on schedule or by hand, never on pull requests, so forks can't reach the keys.
 name: tracker
 
@@ -17,6 +18,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
   pages: write
   id-token: write
 
@@ -48,6 +50,21 @@ jobs:
       - name: Collect
         run: steadybatch-track collect
 
+      - name: Open issues for new serious incidents
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          steadybatch-track issues --out "$RUNNER_TEMP/issues.json"
+          n=$(jq length "$RUNNER_TEMP/issues.json")
+          if [ "$n" -gt 0 ]; then
+            gh label create tracker-incident --color c4302b --description "Opened by the batch API tracker" --force
+            for i in $(seq 0 $((n - 1))); do
+              gh issue create --label tracker-incident \
+                --title "$(jq -r ".[$i].title" "$RUNNER_TEMP/issues.json")" \
+                --body "$(jq -r ".[$i].body" "$RUNNER_TEMP/issues.json")" || echo "could not open issue $i"
+            done
+          fi
+
       - name: Commit data
         id: commit
         run: |
@@ -58,8 +75,7 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             git commit -m "tracker: data $(date -u +%Y-%m-%dT%H:%MZ)"
-            git pull --rebase origin main
-            git push origin HEAD:main
+            pushed=0; for i in 1 2 3; do git pull --rebase origin main && git push origin HEAD:main && pushed=1 && break; sleep 5; done; [ "$pushed" = 1 ]
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 

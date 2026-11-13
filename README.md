@@ -136,13 +136,24 @@ The `tracker/` folder runs a small public measurement of the batch APIs themselv
 (01:00, 07:00, 13:00 and 19:00 UTC) the same 200 requests go to the OpenAI, Gemini and Anthropic batch APIs, and
 each run records how long the batch took (from the provider's own timestamps), whether every line
 came back, and how many answers changed since the previous run. A scheduled GitHub Actions job
-does the work and publishes the results as a page with the raw data. See
-[docs/TRACKER-DESIGN.md](docs/TRACKER-DESIGN.md).
+does the work and publishes the results as a [page](https://kotwal-itpro.github.io/steadybatch/)
+with the raw data. Once a week each provider also gets one 5,000-request batch, to see whether
+big jobs queue differently. See [docs/TRACKER-DESIGN.md](docs/TRACKER-DESIGN.md).
+
+[![OpenAI batch turnaround](https://img.shields.io/endpoint?url=https%3A%2F%2Fkotwal-itpro.github.io%2Fsteadybatch%2Fbadges%2Fopenai-gpt-4.1-mini.json)](https://kotwal-itpro.github.io/steadybatch/)
+[![Gemini batch turnaround](https://img.shields.io/endpoint?url=https%3A%2F%2Fkotwal-itpro.github.io%2Fsteadybatch%2Fbadges%2Fgemini-gemini-3.5-flash-lite.json)](https://kotwal-itpro.github.io/steadybatch/)
+[![Anthropic batch turnaround](https://img.shields.io/endpoint?url=https%3A%2F%2Fkotwal-itpro.github.io%2Fsteadybatch%2Fbadges%2Fanthropic-claude-haiku-5-5-nothink.json)](https://kotwal-itpro.github.io/steadybatch/)
+
+To follow it: the [incident feed](https://kotwal-itpro.github.io/steadybatch/feed.xml) (Atom),
+issues labelled `tracker-incident` (watch the repo), or
+[status.json](https://kotwal-itpro.github.io/steadybatch/status.json) for scripts.
 
 ```bash
 steadybatch-track submit    # send one batch per provider (needs the API keys)
 steadybatch-track collect   # record finished batches in tracker/data/runs.jsonl
-steadybatch-track site      # build the page into tracker/site
+steadybatch-track site      # build the page, status.json, badges and feed into tracker/site
+steadybatch-track selfhost --engine sglang --model Qwen/Qwen2.5-7B-Instruct \
+    --gpu "1x H100 80GB" --gpu-usd-per-hour 2.69 --records 200   # the same inputs on your own GPU
 ```
 
 ## Running on Kubernetes

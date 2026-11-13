@@ -1,6 +1,7 @@
 # Batch API tracker: design draft
 
-2026-11-12. Ankur chose two runs a day, then four (same day). Built on the `tracker` branch and tested on the fake provider; not pushed, nothing runs and nothing is spent until the steps under Plan are done.
+2026-11-12. Ankur chose two runs a day, then four (same day). Live since 2026-11-12 at
+https://kotwal-itpro.github.io/steadybatch/. Extended 2026-11-13 (see "Additions").
 
 ## The gap
 
@@ -118,8 +119,9 @@ New code:
   runs.csv and runs.jsonl.
 - `tracker/`: config, the frozen 200 inputs, prices, `open.json`, `data/`.
 - `.github/workflows/tracker.yml`: schedule and manual runs only; commits data, deploys Pages.
-- `tests/test_tracker.py`: 14 tests on the fake provider (drift, lost and broken lines, caps,
-  missing keys, refused submits, giving up, flaky status checks, timestamps, model versions).
+- `tests/test_tracker.py`: tests on the fake provider (drift, lost and broken lines, caps,
+  missing keys, refused submits, giving up, flaky status checks, timestamps, model versions,
+  the weekly large batch, self-hosted rows, issues, status, badges and feed).
 
 ## Before it goes live
 
@@ -127,5 +129,32 @@ New code:
 2. ~~One real round from this Mac.~~ Done 2026-11-12: all three batches 200/200, 2 to 2.5 minutes each
    (provider timestamps), no lost or broken lines, $0.044 in total. Gemini and Anthropic report no
    start time, so queue time is OpenAI-only.
-3. Ankur adds the three repository secrets and a monthly spend limit per provider account.
-4. Turn on GitHub Pages (source: GitHub Actions), merge the branch, run the workflow once by hand.
+3. ~~Ankur adds the three repository secrets.~~ Done 2026-11-12. Ankur sets a monthly spend limit per provider account.
+4. ~~Turn on GitHub Pages, merge, run once by hand.~~ Done 2026-11-12.
+
+## Additions (2026-11-13)
+
+- **Weekly 5,000-request batch** per provider in the 13:00 UTC slot (`every_days: 7`,
+  `slot_hours: [13]`, inputs `tracker/inputs-5k.jsonl`, made with `make_synthetic.py --n 5000
+  --seed 4242`). Answers the "small batches may queue differently" limit. Hard cap 5,000 records,
+  only for weekly targets. About $0.25 to $0.45 per provider per week. A refused submit (for
+  example an OpenAI enqueued-token limit) is recorded as an incident, not retried.
+- **Following it**: `status.json` (p50/p90 turnaround, lines lost, drift, what is running),
+  shields.io endpoint badges in `badges/`, an Atom feed of incidents (`feed.xml`), and a GitHub
+  issue labelled `tracker-incident` for serious incidents (refused or failed batch, lost lines,
+  over 6 hours; at most 3 per run; history is not backfilled). Incidents are worked out once in
+  Python (`tracker_site.problems`) so the page, feed and issues agree.
+- **Planner** on the page: pick a submit slot and a deadline, see how many recent batches per
+  provider finished in time.
+- **Self-hosted comparison**: `steadybatch-track selfhost` runs the same inputs through SGLang or
+  vLLM offline and records start-up time, run time and GPU cost (`tracker/data/selfhost.jsonl`).
+  `scripts/run_tracker_selfhost.sh` does the 200 and 5,000 runs on a rented GPU.
+- **Monthly data DOI**: `.github/workflows/data-release.yml` publishes the data as a new version of
+  a Zenodo *dataset* on the 1st of each month (`scripts/zenodo_snapshot.py`). Not a GitHub release,
+  because a release here also publishes to PyPI and versions the library's DOI. Needs a
+  `ZENODO_TOKEN` secret; does nothing without it.
+- **Usage history**: `.github/workflows/usage.yml` saves stars, forks, PyPI downloads and (with a
+  `TRAFFIC_TOKEN` secret) GitHub traffic and referrers to `usage/daily.jsonl` every day, because
+  GitHub only keeps 14 days of traffic. GitHub Pages itself has no view counts.
+- **More providers** (Bedrock, Mistral, Together): not added. Each needs an account and keys from
+  Ankur, and a new adapter tested against the real API.

@@ -51,7 +51,7 @@ packages = ["src/steadybatch"]
 
 [tool.hatch.build.targets.sdist]
 # Keep the source package small: benchmark results and generated data live on GitHub.
-exclude = ["/results", "/runs", "/examples/*.jsonl", "/.github", "/scripts", "/tracker"]
+exclude = ["/results", "/runs", "/examples/*.jsonl", "/.github", "/scripts", "/tracker", "/usage"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
