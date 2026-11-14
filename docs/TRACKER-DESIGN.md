@@ -156,5 +156,12 @@ New code:
 - **Usage history**: `.github/workflows/usage.yml` saves stars, forks, PyPI downloads and (with a
   `TRAFFIC_TOKEN` secret) GitHub traffic and referrers to `usage/daily.jsonl` every day, because
   GitHub only keeps 14 days of traffic. GitHub Pages itself has no view counts.
+- **One schedule** (2026-11-14): GitHub dropped the submit cron whenever it fired in the same
+  minute as the 30-minute collect cron, so the 01:00 and 13:00 UTC slots of 2026-11-13 (and that
+  day's weekly batch) never went out, and the 30-minute schedule itself ran only about every 2 to 6
+  hours. Now there is one cron; every run calls submit, which sends each target once per slot
+  (`slot_hours` in the config) at the first run after the slot starts, and rows carry
+  `slot_hour_utc` as well as the actual send hour. Turnaround uses the providers' timestamps, so
+  late collection doesn't affect it.
 - **More providers** (Bedrock, Mistral, Together): not added. Each needs an account and keys from
   Ankur, and a new adapter tested against the real API.

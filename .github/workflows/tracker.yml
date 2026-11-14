@@ -7,8 +7,9 @@ name: tracker
 
 on:
   schedule:
-    - cron: "0 1,7,13,19 * * *"   # submit slots
-    - cron: "*/30 * * * *"     # collect
+    # One schedule only: GitHub drops one of two schedules that fire at the same minute. Every
+    # run calls submit, which sends a batch only once per slot (slot_hours in tracker/config.json).
+    - cron: "*/30 * * * *"
   workflow_dispatch:
     inputs:
       submit:
@@ -44,7 +45,7 @@ jobs:
       - run: pip install -e ".[openai,gemini,anthropic]"
 
       - name: Submit
-        if: github.event.schedule == '0 1,7,13,19 * * *' || inputs.submit
+        if: github.event_name == 'schedule' || inputs.submit
         run: steadybatch-track submit
 
       - name: Collect

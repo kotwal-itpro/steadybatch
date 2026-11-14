@@ -7,6 +7,7 @@
   "open": "open.json",
   "runs": "data/runs.jsonl",
   "latest": "data/latest",
+  "slot_hours": [1, 7, 13, 19],
   "max_records": 200,
   "max_tokens": 300,
   "max_submits_per_day": 4,

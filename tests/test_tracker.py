@@ -318,3 +318,20 @@ def test_site_writes_status_badges_and_feed(tmp_path):
     assert len(doc.getElementsByTagName("entry")) == 2
     html = (out / "index.html").read_text()
     assert '"selfhost":[{' in html and (out / "selfhost.jsonl").exists()
+
+
+def test_slots_send_once_per_slot_however_often_submit_runs(tmp_path):
+    cfg = make_cfg(tmp_path, slot_hours=[1, 7, 13, 19], max_submits_per_day=4)
+    p = FakeProvider(answer=demo_answer)
+    f = lambda t: p
+    def run(h, m=0, day=0):
+        c = at_hour(h, day); c.t += m * 60
+        submit(cfg, make_provider=f, clock=c, env={"K1": "x"})
+        collect(cfg, make_provider=f, clock=c)
+    run(7, 40); run(8, 19); run(9, 5)       # one batch for the 07:00 slot, sent late
+    run(16, 37)                              # the 13:00 slot, sent very late
+    run(20, 23); run(22, 18)                 # the 19:00 slot
+    out = rows(cfg)
+    assert [(r["submit_hour_utc"], r["slot_hour_utc"]) for r in out] == [(7, 7), (16, 13), (20, 19)]
+    run(0, 30, day=1)                        # still the 19:00 slot of the day before
+    assert len(rows(cfg)) == 3

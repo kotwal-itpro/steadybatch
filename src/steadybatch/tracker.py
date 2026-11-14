@@ -101,6 +101,13 @@ class Config:
                          for r in requests]
 
 
+def slot_start(now: float, hours: list[int]) -> float:
+    """The start of the most recent submit slot at or before ``now`` (slots are whole UTC hours)."""
+    day = now - now % 86400
+    starts = [day + h * 3600 for h in hours] + [day - 86400 + h * 3600 for h in hours]
+    return max(t for t in starts if t <= now)
+
+
 def target_id(t: dict[str, Any]) -> str:
     return t.get("id") or f"{t['provider']}-{t['model']}"
 
@@ -157,11 +164,20 @@ def submit(cfg: Config, *, make_provider: ProviderFactory = default_factory,
     now = clock()
     today = _day(now)
     hour = datetime.fromtimestamp(now, timezone.utc).hour
+    # With "slot_hours" in the config, submit can be called as often as you like (GitHub's cron
+    # drops and delays runs): each target goes out once per slot, at the first call after the
+    # slot starts, and the row records which slot it belongs to.
+    slots = cfg.raw.get("slot_hours")
+    current = slot_start(now, slots) if slots else None
+    slot_hour = datetime.fromtimestamp(current, timezone.utc).hour if current is not None else hour
     log: list[str] = []
     for t in cfg.targets:
         tid = target_id(t)
-        if t.get("slot_hours") is not None and hour not in t["slot_hours"]:
+        if t.get("slot_hours") is not None and slot_hour not in t["slot_hours"]:
             continue  # this target only goes out in certain slots
+        if current is not None and any(x["target"] == tid and x["submitted_ts"] >= current
+                                       for x in rows + open_batches):
+            continue  # already sent in this slot
         if every_days(t):
             last = max([r["submitted_ts"] for r in rows if r["target"] == tid]
                        + [b["submitted_ts"] for b in open_batches if b["target"] == tid], default=None)
@@ -196,14 +212,15 @@ def submit(cfg: Config, *, make_provider: ProviderFactory = default_factory,
                                     "state": "submit_failed", "error_message": _short_error(exc),
                                     "submitted_ts": now, "submitted_at": _iso(now),
                                     "submit_hour_utc": datetime.fromtimestamp(now, timezone.utc).hour,
-                                    "records": len(prepared), "steadybatch_version": __version__})
+                                    "slot_hour_utc": slot_hour, "records": len(prepared), "steadybatch_version": __version__})
             log.append(f"{tid}: submit failed: {_short_error(exc)}")
             continue
         # The custom_id -> record mapping is rebuilt from the frozen inputs at collect time,
         # so open.json stays small even for a 5,000-record batch.
         open_batches.append({"target": tid, "label": t.get("label"),
                              "provider": t["provider"], "model": t["model"],
-                             "batch_id": batch_id, "submitted_ts": now, "records": len(prepared)})
+                             "batch_id": batch_id, "submitted_ts": now, "records": len(prepared),
+                             "slot_hour_utc": slot_hour})
         log.append(f"{tid}: submitted {len(prepared)} records as {batch_id}")
     _write_json(open_path, open_batches)
     return log
@@ -346,6 +363,7 @@ def collect(cfg: Config, *, make_provider: ProviderFactory = default_factory,
             "state": "gave_up" if gave_up else status.state.value, "provider_detail": status.detail,
             "submitted_ts": b["submitted_ts"], "submitted_at": _iso(b["submitted_ts"]),
             "submit_hour_utc": datetime.fromtimestamp(b["submitted_ts"], timezone.utc).hour,
+            "slot_hour_utc": b.get("slot_hour_utc", datetime.fromtimestamp(b["submitted_ts"], timezone.utc).hour),
             "created_at": _iso(created), "started_at": _iso(started), "ended_at": _iso(ended),
             "turnaround_s": round(turnaround, 1) if turnaround is not None else None,
             "turnaround_source": source,

@@ -29,7 +29,7 @@ PROVIDER_NAMES = {"openai": "OpenAI", "gemini": "Gemini", "anthropic": "Anthropi
 PROVIDER_HEX = {"openai": "2a78d6", "gemini": "eb6834", "anthropic": "1baf7a"}
 
 CSV_FIELDS = [
-    "target", "label", "provider", "model", "state", "submitted_at", "submit_hour_utc", "created_at",
+    "target", "label", "provider", "model", "state", "submitted_at", "submit_hour_utc", "slot_hour_utc", "created_at",
     "started_at", "ended_at", "turnaround_s", "turnaround_source", "queue_s", "records", "ok",
     "missing", "error", "invalid", "truncated", "compared_with_previous", "changed_vs_previous",
     "exact_accuracy", "cost_usd", "cost_per_1000_usd", "model_versions", "batch_id", "error_message",
@@ -267,7 +267,7 @@ code{font-size:12.5px;background:var(--surface-2);padding:1px 5px;border-radius:
 <div class="chart" id="turn"></div>
 
 <h2>By time of submission</h2>
-<p>Median and slowest turnaround over the last 30 days, by the hour (UTC) the batch was sent.</p>
+<p>Median and slowest turnaround over the last 30 days, by submit slot (UTC). GitHub's scheduler can start a slot late; the exact send time is in the data.</p>
 <div class="wrap"><table id="slots"></table></div>
 
 <h2>Will it be done in time?</h2>
@@ -328,6 +328,7 @@ const colorOf = t => `var(--s${PROV[providerOf(t)] || (allTargets.indexOf(t)%3)+
 const label = t => { const r = rows.slice().reverse().find(x=>x.target===t) || DATA.open.find(x=>x.target===t);
   return r.label || `${NAMES[r.provider]||r.provider} · ${r.model}`; };
 const DAY = 86400;
+const slotOf = r => r.slot_hour_utc ?? r.submit_hour_utc;
 const nowTs = Date.parse(DATA.built_at)/1000;
 const recent = rows.filter(r => r.submitted_ts > nowTs - 30*DAY && !weekly(r));
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -408,11 +409,11 @@ chart("drift", dpts, {yLabel:"Answers changed since previous run", lines:true, y
 legend("legend2");
 
 // By submission hour.
-const hours = [...new Set(recent.map(r=>r.submit_hour_utc))].sort((a,b)=>a-b);
+const hours = [...new Set(recent.map(r=>slotOf(r)))].sort((a,b)=>a-b);
 document.getElementById("slots").innerHTML = recent.length ? `<tr><th>Provider and model</th>${hours.map(h=>
   `<th class="num">${String(h).padStart(2,"0")}:00 median</th><th class="num">${String(h).padStart(2,"0")}:00 slowest</th>`).join("")}</tr>` +
   targets.map(t => `<tr><td><i class="key" style="display:inline-block;margin-right:6px;background:${colorOf(t)}"></i>${esc(label(t))}</td>${hours.map(h=>{
-    const v = recent.filter(r=>r.target===t && r.submit_hour_utc===h && r.turnaround_s!=null).map(r=>r.turnaround_s);
+    const v = recent.filter(r=>r.target===t && slotOf(r)===h && r.turnaround_s!=null).map(r=>r.turnaround_s);
     return `<td class="num">${dur(median(v))}</td><td class="num">${dur(v.length?Math.max(...v):null)}</td>`; }).join("")}</tr>`).join("")
   : `<tr><td class="empty">No data yet.</td></tr>`;
 
@@ -425,7 +426,7 @@ document.getElementById("inctable").innerHTML = inc.length ? `<tr><th>Sent</th><
   : `<tr><td class="empty">None so far.</td></tr>`;
 
 // Planner: share of recent batches in a slot that finished within the deadline.
-const planHours = [...new Set(recent.map(r=>r.submit_hour_utc))].sort((a,b)=>a-b);
+const planHours = [...new Set(recent.map(r=>slotOf(r)))].sort((a,b)=>a-b);
 const WITHIN = [[600,"10 minutes"],[3600,"1 hour"],[3*3600,"3 hours"],[6*3600,"6 hours"],[12*3600,"12 hours"],[24*3600,"24 hours"]];
 const hSel = document.getElementById("planHour"), wSel = document.getElementById("planWithin");
 hSel.innerHTML = planHours.map(h=>`<option value="${h}">${String(h).padStart(2,"0")}:00 UTC</option>`).join("") || `<option>–</option>`;
@@ -433,7 +434,7 @@ wSel.innerHTML = WITHIN.map(([v,t])=>`<option value="${v}"${v===3600?" selected"
 function plan(){ const h=+hSel.value, w=+wSel.value, el=document.getElementById("planner");
   if(!planHours.length){ el.innerHTML = `<tr><td class="empty">No data yet.</td></tr>`; return; }
   el.innerHTML = `<tr><th>Provider and model</th><th class="num">Finished in time</th><th class="num">Slowest in this slot</th><th></th></tr>` +
-    targets.map(t=>{ const rs = recent.filter(r=>r.target===t && r.submit_hour_utc===h);
+    targets.map(t=>{ const rs = recent.filter(r=>r.target===t && slotOf(r)===h);
       const ok = rs.filter(r=>r.turnaround_s!=null && r.turnaround_s<=w).length;
       const done = rs.filter(r=>r.turnaround_s!=null).map(r=>r.turnaround_s);
       return `<tr><td><i class="key" style="display:inline-block;margin-right:6px;background:${colorOf(t)}"></i>${esc(label(t))}</td>
