@@ -163,5 +163,9 @@ New code:
   (`slot_hours` in the config) at the first run after the slot starts, and rows carry
   `slot_hour_utc` as well as the actual send hour. Turnaround uses the providers' timestamps, so
   late collection doesn't affect it.
+- **Collect before submit** (2026-11-16): submit skips a target whose previous batch is still in
+  `open.json`. With submit running first, a batch that had finished at the provider but was not yet
+  collected blocked the next slot, so about every other slot was skipped (07:00 never went out from
+  Nov 14 to 16). The workflow now collects first, then submits.
 - **More providers** (Bedrock, Mistral, Together): not added. Each needs an account and keys from
   Ankur, and a new adapter tested against the real API.
