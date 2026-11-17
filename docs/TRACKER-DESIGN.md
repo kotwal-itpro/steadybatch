@@ -167,5 +167,12 @@ New code:
   `open.json`. With submit running first, a batch that had finished at the provider but was not yet
   collected blocked the next slot, so about every other slot was skipped (07:00 never went out from
   Nov 14 to 16). The workflow now collects first, then submits.
+- **Outside trigger** (2026-11-17): GitHub still started the schedule only every 6 to 8 hours, so a
+  slot with no run in it was lost (01:00 UTC most often). `scripts/kick_tracker.py` runs every 15
+  minutes from Ankur's always-on Mac (launchd job `io.github.kotwal-itpro.steadybatch-kick`, log
+  `~/Library/Logs/steadybatch-kick.log`) and starts the workflow with `gh workflow run` only when a
+  slot is due and unsent, or a batch is open and no run started in the last 25 minutes. It uses the
+  existing `gh` sign-in, so no new token. The GitHub schedule stays as a fallback; submit still
+  sends at most once per slot, so the two can't double-submit.
 - **More providers** (Bedrock, Mistral, Together): not added. Each needs an account and keys from
   Ankur, and a new adapter tested against the real API.
