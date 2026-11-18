@@ -1,1 +1,32 @@
-[]
+[
+ {
+  "batch_id": "batch_6afcfaf31db88190b656f1aa671b95a7",
+  "label": "OpenAI \u00b7 gpt-4.1-mini",
+  "model": "gpt-4.1-mini",
+  "provider": "openai",
+  "records": 200,
+  "slot_hour_utc": 1,
+  "submitted_ts": 1794964209.054077,
+  "target": "openai-gpt-4.1-mini"
+ },
+ {
+  "batch_id": "batches/vi2skdimniouexcsaib4gayyhxuhm46a276l",
+  "label": "Gemini \u00b7 gemini-3.5-flash-lite",
+  "model": "gemini-3.5-flash-lite",
+  "provider": "gemini",
+  "records": 200,
+  "slot_hour_utc": 1,
+  "submitted_ts": 1794964209.054077,
+  "target": "gemini-gemini-3.5-flash-lite"
+ },
+ {
+  "batch_id": "msgbatch_01Uo9FnpJ4o59ywcuizQk4aQ",
+  "label": "Anthropic \u00b7 claude-haiku-5-5 (thinking off)",
+  "model": "claude-haiku-5-5",
+  "provider": "anthropic",
+  "records": 200,
+  "slot_hour_utc": 1,
+  "submitted_ts": 1794964209.054077,
+  "target": "anthropic-claude-haiku-5-5-nothink"
+ }
+]
