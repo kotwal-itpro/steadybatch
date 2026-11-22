@@ -1,12 +1,1 @@
-[
- {
-  "batch_id": "batch_6b0295e504908190b22cb6473f8300a5",
-  "label": "OpenAI \u00b7 gpt-4.1-mini",
-  "model": "gpt-4.1-mini",
-  "provider": "openai",
-  "records": 200,
-  "slot_hour_utc": 7,
-  "submitted_ts": 1795331554.9458477,
-  "target": "openai-gpt-4.1-mini"
- }
-]
+[]
