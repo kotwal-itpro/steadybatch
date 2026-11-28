@@ -1,1 +1,62 @@
-[]
+[
+ {
+  "batch_id": "batch_6b0ad5f93910819088ce38a287c3e8c2",
+  "label": "OpenAI \u00b7 gpt-4.1-mini",
+  "model": "gpt-4.1-mini",
+  "provider": "openai",
+  "records": 200,
+  "slot_hour_utc": 13,
+  "submitted_ts": 1795872246.2523487,
+  "target": "openai-gpt-4.1-mini"
+ },
+ {
+  "batch_id": "batches/0u2cgasalnszkzu6702di1avbkcuxxhgqlkm",
+  "label": "Gemini \u00b7 gemini-3.5-flash-lite",
+  "model": "gemini-3.5-flash-lite",
+  "provider": "gemini",
+  "records": 200,
+  "slot_hour_utc": 13,
+  "submitted_ts": 1795872246.2523487,
+  "target": "gemini-gemini-3.5-flash-lite"
+ },
+ {
+  "batch_id": "msgbatch_01Yas1CbTQNWEtkgS5QWkrbJ",
+  "label": "Anthropic \u00b7 claude-haiku-5-5 (thinking off)",
+  "model": "claude-haiku-5-5",
+  "provider": "anthropic",
+  "records": 200,
+  "slot_hour_utc": 13,
+  "submitted_ts": 1795872246.2523487,
+  "target": "anthropic-claude-haiku-5-5-nothink"
+ },
+ {
+  "batch_id": "batch_6b0ad6034a5081909702ca2cd8f6c25b",
+  "label": "OpenAI \u00b7 gpt-4.1-mini, 5,000 requests",
+  "model": "gpt-4.1-mini",
+  "provider": "openai",
+  "records": 5000,
+  "slot_hour_utc": 13,
+  "submitted_ts": 1795872246.2523487,
+  "target": "openai-gpt-4.1-mini-5k"
+ },
+ {
+  "batch_id": "batches/304d4hm7yh66zmx7xy8thwyzzn4i3oak59gt",
+  "label": "Gemini \u00b7 gemini-3.5-flash-lite, 5,000 requests",
+  "model": "gemini-3.5-flash-lite",
+  "provider": "gemini",
+  "records": 5000,
+  "slot_hour_utc": 13,
+  "submitted_ts": 1795872246.2523487,
+  "target": "gemini-gemini-3.5-flash-lite-5k"
+ },
+ {
+  "batch_id": "msgbatch_01TiDLtimcMvNZMD7ijVbUZp",
+  "label": "Anthropic \u00b7 claude-haiku-5-5 (thinking off), 5,000 requests",
+  "model": "claude-haiku-5-5",
+  "provider": "anthropic",
+  "records": 5000,
+  "slot_hour_utc": 13,
+  "submitted_ts": 1795872246.2523487,
+  "target": "anthropic-claude-haiku-5-5-nothink-5k"
+ }
+]
